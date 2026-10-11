@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6f2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="四线系统">
+  <link rel="manifest" href="./mobile.webmanifest">
+  <!-- iOS 主屏图标只认 PNG；SVG 会被忽略、退化成网页截图。 -->
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <title>四线生活系统 · 移动版</title>
+  <style>
+    :root {
+      --ink: #24332b;
+      --muted: #68776e;
+      --page: #f5f6f2;
+      --card: #ffffff;
+      --line: #dce4dd;
+      --money: #2f8066;
+      --money-soft: #e1f0e8;
+      --education: #7164ad;
+      --education-soft: #ece9f8;
+      --body: #c46a4d;
+      --body-soft: #f7e7e0;
+      --mind: #377797;
+      --mind-soft: #e4f0f5;
+      --danger: #aa3e3b;
+      --shadow: 0 8px 22px rgba(31, 52, 42, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      line-height: 1.45;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(47, 128, 102, .28);
+      outline-offset: 2px;
+    }
+    .app {
+      width: min(100%, 520px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: calc(18px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));
+    }
+    .app-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--money);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 3px; font-size: 27px; letter-spacing: -.04em; line-height: 1.1; }
+    h2 { margin-bottom: 3px; font-size: 18px; letter-spacing: -.02em; }
+    h3 { margin-bottom: 2px; font-size: 15px; }
+    .subtle { margin-bottom: 0; color: var(--muted); font-size: 13px; }
+    .week-control {
+      display: grid;
+      grid-template-columns: repeat(3, 38px);
+      gap: 4px;
+    }
+    .icon-btn, .nav-button, .record-delete {
+      border: 0;
+      color: var(--ink);
+      background: transparent;
+    }
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      font-size: 20px;
+      line-height: 1;
+    }
+    .screen { display: none; animation: appear .18s ease-out; }
+    .screen.active { display: block; }
+    @keyframes appear { from { opacity: .2; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .hero {
+      overflow: hidden;
+      margin-bottom: 14px;
+      border-radius: 20px;
+      padding: 18px;
+      color: #174737;
+      background: linear-gradient(145deg, #dbeee4, #f7fbf8);
+      box-shadow: var(--shadow);
+    }
+    .hero-label { margin-bottom: 4px; font-size: 12px; font-weight: 750; }
+    .hero-title { margin: 0; font-size: 24px; letter-spacing: -.04em; }
+    .hero-detail { margin: 4px 0 13px; color: #477061; font-size: 13px; }
+    .hero-progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(47, 128, 102, .14);
+    }
+    .hero-progress span { display: block; height: 100%; border-radius: inherit; background: var(--money); transition: width .2s ease; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .summary-card {
+      border-radius: 14px;
+      padding: 11px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .summary-card span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .summary-card b { display: block; margin-top: 4px; color: var(--ink); font-size: 19px; letter-spacing: -.03em; }
+    .summary-card small { display: block; margin-top: 1px; color: var(--muted); font-size: 11px; }
+    .section {
+      margin-top: 18px;
+    }
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 9px;
+    }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .focus-list { display: grid; gap: 9px; }
+    .focus-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 50px;
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: #f8faf8;
+    }
+    .focus-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; }
+    .focus-copy { min-width: 0; flex: 1; }
+    .focus-copy b { display: block; font-size: 14px; }
+    .focus-copy span { display: block; margin-top: 1px; color: var(--muted); font-size: 12px; }
+    .focus-time { color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .quick-add {
+      min-height: 84px;
+      border: 1px solid transparent;
+      border-radius: 15px;
+      padding: 12px;
+      text-align: left;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .quick-add:hover { filter: brightness(.985); }
+    .quick-add .quick-name { display: block; color: var(--ink); font-size: 14px; font-weight: 750; }
+    .quick-add .quick-time { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .quick-add.money { border-color: #bfddce; background: var(--money-soft); }
+    .quick-add.education { border-color: #d9d1f0; background: var(--education-soft); }
+    .quick-add.body { border-color: #f0d0c4; background: var(--body-soft); }
+    .quick-add.mind { border-color: #cce0e9; background: var(--mind-soft); }
+    details.card { padding: 0; overflow: hidden; }
+    details summary {
+      min-height: 50px;
+      padding: 15px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .form-inner { padding: 0 14px 14px; }
+    .field { display: grid; gap: 6px; margin-top: 10px; }
+    label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cbd7ce;
+      border-radius: 10px;
+      padding: 11px;
+      color: var(--ink);
+      background: #fff;
+      font-size: 16px;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .primary {
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #fff;
+      background: var(--money);
+      font-weight: 750;
+    }
+    .primary:active { transform: translateY(1px); background: #226a53; }
+    .secondary {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 9px 12px;
+      color: var(--ink);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .secondary.danger { color: var(--danger); }
+    .save-row { margin-top: 12px; }
+    .recent-list, .week-log { display: grid; gap: 8px; }
+    .recent-item, .log-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .recent-item:last-child, .log-item:last-child { border-bottom: 0; }
+    .record-marker { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; }
+    .record-copy { min-width: 0; flex: 1; }
+    .record-copy b { display: block; font-size: 13px; }
+    .record-copy span { display: block; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .record-minutes { font-size: 12px; font-weight: 750; white-space: nowrap; }
+    .record-delete { padding: 8px 4px; color: var(--danger); font-size: 12px; }
+    .empty { margin: 0; padding: 5px 0; color: var(--muted); font-size: 13px; }
+    .balance-card {
+      border: 1px solid #c9e0d3;
+      border-radius: 16px;
+      padding: 15px;
+      color: #365c4c;
+      background: var(--money-soft);
+    }
+    .balance-card strong { display: block; font-size: 16px; }
+    .balance-card span { display: block; margin-top: 3px; font-size: 13px; }
+    .track-list { display: grid; gap: 12px; }
+    .track-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; column-gap: 9px; align-items: center; }
+    .track-row h3 { margin: 0; }
+    .track-row .track-sub { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .track-value { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .track-value b { color: var(--ink); }
+    .bar { grid-column: 2 / 4; height: 7px; overflow: hidden; margin-top: 7px; border-radius: 999px; background: #edf0ed; }
+    .bar span { display: block; height: 100%; border-radius: inherit; }
+    .day-summary { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 12px; }
+    .day-summary div {
+      min-height: 49px;
+      border-radius: 9px;
+      padding: 6px 2px;
+      color: var(--muted);
+      background: #f6f8f6;
+      text-align: center;
+      font-size: 10px;
+    }
+    .day-summary b { display: block; color: var(--ink); font-size: 11px; }
+    .day-summary .today { color: #fff; background: var(--money); }
+    .day-summary .today b { color: #fff; }
+    .target-list { display: grid; gap: 10px; }
+    .target-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 86px;
+      gap: 10px;
+      align-items: center;
+    }
+    .target-row label { color: var(--ink); font-size: 14px; }
+    .target-row label span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 400; }
+    .target-row input { padding: 9px; text-align: right; }
+    .utility-grid { display: grid; gap: 9px; margin-top: 16px; }
+    .tip {
+      margin: 14px 0 0;
+      border-radius: 12px;
+      padding: 11px;
+      color: #516c60;
+      background: #eef5ef;
+      font-size: 12px;
+    }
+    .bottom-nav {
+      position: fixed;
+      z-index: 5;
+      left: 50%;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: min(calc(100% - 24px), 496px);
+      transform: translateX(-50%);
+      border: 1px solid rgba(213, 223, 215, .94);
+      border-radius: 17px;
+      padding: 5px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 10px 28px rgba(31, 52, 42, .16);
+      backdrop-filter: blur(14px);
+    }
+    .nav-button {
+      min-height: 45px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .nav-button.active { color: #fff; background: var(--money); }
+    .toast {
+      position: fixed;
+      z-index: 10;
+      left: 50%;
+      bottom: calc(82px + env(safe-area-inset-bottom));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: min(calc(100% - 32px), 440px);
+      transform: translateX(-50%);
+      border-radius: 12px;
+      padding: 11px 13px;
+      color: #fff;
+      background: #24332b;
+      box-shadow: 0 12px 28px rgba(31, 52, 42, .24);
+      font-size: 13px;
+    }
+    .toast[hidden] { display: none; }
+    .undo {
+      margin-left: auto;
+      border: 0;
+      padding: 5px 2px;
+      color: #9fe1bf;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 750;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    @media (min-width: 680px) {
+      .app { padding-left: 24px; padding-right: 24px; }
+      .quick-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Personal operating system</p>
+        <h1>四线生活系统</h1>
+        <p class="subtle" id="rangeLabel"></p>
+      </div>
+      <div class="week-control" aria-label="切换周次">
+        <button class="icon-btn" type="button" data-week="prev" aria-label="上一周">‹</button>
+        <button class="icon-btn" type="button" data-week="today" aria-label="回到本周">今</button>
+        <button class="icon-btn" type="button" data-week="next" aria-label="下一周">›</button>
+      </div>
+    </header>
+
+    <section class="screen active" id="todayScreen" aria-labelledby="todayTab">
+      <section class="hero" aria-label="本周总体完成度">
+        <div class="hero-label">本周已投入</div>
+        <p class="hero-title" id="heroTitle">0 分钟</p>
+        <p class="hero-detail" id="heroDetail">先完成一个小行动，让系统开始运转。</p>
+        <div class="hero-progress" role="progressbar" id="heroBar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+      </section>
+      <section class="summary-grid" id="mainLineSummary" aria-label="四条主线本周完成度"></section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>今天的锚点</h2>
+          <p id="todayCaption"></p>
+        </div>
+        <div class="card focus-list" id="todayFocus"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>快速记一笔</h2>
+          <p>点一下即保存</p>
+        </div>
+        <div class="quick-grid" id="quickGrid"></div>
+      </section>
+
+      <section class="section">
+        <details class="card">
+          <summary>补记其他日期 / 其他事项 / 加一句备注</summary>
+          <form class="form-inner" id="customForm">
+            <div class="field">
+              <label for="recordDate">日期（可补记前几天）</label>
+              <input id="recordDate" name="date" type="date" required>
+            </div>
+            <div class="two-cols">
+              <div class="field">
+                <label for="recordTask">项目</label>
+                <select id="recordTask" name="task"></select>
+              </div>
+              <div class="field">
+                <label for="recordMinutes">分钟</label>
+                <input id="recordMinutes" name="minutes" type="number" min="1" max="720" step="5" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="recordNote">一句记录（可选）</label>
+              <textarea id="recordNote" name="note" maxlength="180" placeholder="例如：完成目标岗位简历第一版"></textarea>
+            </div>
+            <div class="save-row"><button class="primary" type="submit">保存这一笔</button></div>
+          </form>
+        </details>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>最近记录</h2>
+          <p>最近 5 条</p>
+        </div>
+        <div class="card recent-list" id="recentList"></div>
+      </section>
+    </section>
+
+    <section class="screen" id="weekScreen" aria-labelledby="weekTab">
+      <section class="balance-card">
+        <strong id="balanceTitle">本周双引擎</strong>
+        <span id="balanceText"></span>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>本周轨道</h2>
+          <p>按实际投入计算</p>
+        </div>
+        <div class="card track-list" id="trackList"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>每天投入</h2>
+          <p>点击周次按钮可回看</p>
+        </div>
+        <div class="card">
+          <div class="day-summary" id="daySummary"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <h2>本周全部记录</h2>
+          <p id="weekRecordCount"></p>
+        </div>
+        <div class="card week-log" id="weekLog"></div>
+      </section>
+    </section>
+
+    <section class="screen" id="settingsScreen" aria-labelledby="settingsTab">
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h2>每周目标</h2>
+            <p>单位：分钟</p>
+          </div>
+        </div>
+        <div class="target-list" id="targetList"></div>
+        <p class="tip">建议先锁住 Workout、Read 和亲子陪伴；可支配的深度时间再按“求职 : 投资 : 育儿理论 = 2 : 2 : 1”安排。</p>
+        <div class="utility-grid">
+          <button class="secondary" type="button" id="syncIncome">将投资目标同步为求职目标</button>
+          <button class="secondary" type="button" id="importData">导入电脑备份</button>
+          <button class="secondary" type="button" id="exportData">导出本地备份</button>
+          <button class="secondary danger" type="button" id="clearRecords">清空所有记录</button>
+          <input class="sr-only" id="importFile" type="file" accept="application/json,.json">
+        </div>
+      </section>
+      <section class="section card">
+        <h2>数据说明</h2>
+        <p class="subtle">桌面版与移动版只会在同一浏览器环境中共享数据；手机与电脑不会自动同步。可从电脑导出备份，再在手机中导入。</p>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="主导航">
+    <button class="nav-button active" id="todayTab" type="button" data-screen="today">今天</button>
+    <button class="nav-button" id="weekTab" type="button" data-screen="week">本周</button>
+    <button class="nav-button" id="settingsTab" type="button" data-screen="settings">设置</button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span id="toastText"></span>
+    <button class="undo" id="undoButton" type="button" hidden>撤销</button>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'four-lines-system-v1';
+      var TASKS = [
+        { key: 'job', label: '找新工作', group: 'money', color: 'var(--money)', defaultMinutes: 75, hint: '投递、简历、联系或面试准备' },
+        { key: 'stock', label: '股票投资', group: 'money', color: 'var(--money)', defaultMinutes: 75, hint: '研究、复盘和投资决策记录' },
+        { key: 'childRead', label: '陪着读书', group: 'education', color: 'var(--education)', defaultMinutes: 30, hint: '稳定陪伴与共同阅读' },
+        { key: 'social', label: '陪着社交', group: 'education', color: 'var(--education)', defaultMinutes: 120, hint: '社交活动或高质量陪伴' },
+        { key: 'theory', label: '育儿理论', group: 'education', color: 'var(--education)', defaultMinutes: 60, hint: '学习一个原则并实践' },
+        { key: 'workout', label: 'Workout', group: 'body', color: 'var(--body)', defaultMinutes: 20, hint: '工作日 20 分钟，休息日 60 分钟' },
+        { key: 'reading', label: 'Read', group: 'mind', color: 'var(--mind)', defaultMinutes: 60, hint: '休息日的恢复性阅读' }
+      ];
+      var taskByKey = {};
+      TASKS.forEach(function (task) { taskByKey[task.key] = task; });
+
+      function localDateISO(date) {
+        var offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+      }
+      function mondayFor(input) {
+        var date = typeof input === 'string' ? new Date(input + 'T12:00:00') : new Date(input);
+        var day = date.getDay() || 7;
+        date.setDate(date.getDate() - day + 1);
+        date.setHours(12, 0, 0, 0);
+        return localDateISO(date);
+      }
+      function plusDays(iso, days) {
+        var date = new Date(iso + 'T12:00:00');
+        date.setDate(date.getDate() + days);
+        return localDateISO(date);
+      }
+      function datesForWeek(start) {
+        return Array.from({ length: 7 }, function (_, index) { return plusDays(start, index); });
+      }
+      function formatRange(start) {
+        var first = new Date(start + 'T12:00:00');
+        var last = new Date(plusDays(start, 6) + 'T12:00:00');
+        return (first.getMonth() + 1) + '月' + first.getDate() + '日 — ' + (last.getMonth() + 1) + '月' + last.getDate() + '日';
+      }
+      function formatDate(iso) {
+        var date = new Date(iso + 'T12:00:00');
+        return (date.getMonth() + 1) + '/' + date.getDate();
+      }
+      function formatMinutes(value) {
+        var minutes = Math.round(Number(value) || 0);
+        if (minutes < 60) return minutes + ' 分钟';
+        var hours = Math.floor(minutes / 60);
+        var rest = minutes % 60;
+        return rest ? hours + ' 小时 ' + rest + ' 分' : hours + ' 小时';
+      }
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, function (character) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character];
+        });
+      }
+      function newState() {
+        return {
+          weekStart: mondayFor(new Date()),
+          targets: { job: 225, stock: 225, childRead: 150, social: 120, theory: 120, workout: 220, reading: 120 },
+          records: []
+        };
+      }
+      function normaliseState(stored) {
+        if (!stored || typeof stored !== 'object') return null;
+        var initial = newState();
+        initial.weekStart = typeof stored.weekStart === 'string' ? stored.weekStart : initial.weekStart;
+        initial.targets = Object.assign(initial.targets, stored.targets || {});
+        initial.records = Array.isArray(stored.records) ? stored.records.filter(function (record) {
+          return record && taskByKey[record.task] && typeof record.date === 'string' && Number(record.minutes) > 0;
+        }) : [];
+        return initial;
+      }
+      function loadState() {
+        try {
+          return normaliseState(JSON.parse(localStorage.getItem(STORAGE_KEY))) || newState();
+        } catch (error) {
+          return newState();
+        }
+      }
+      var state = loadState();
+      var toastTimer;
+      var undoId = null;
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+      function weekRecords() {
+        var end = plusDays(state.weekStart, 6);
+        return state.records.filter(function (record) { return record.date >= state.weekStart && record.date <= end; });
+      }
+      function totals(records) {
+        var output = {};
+        TASKS.forEach(function (task) { output[task.key] = 0; });
+        records.forEach(function (record) { output[record.task] += Number(record.minutes); });
+        return output;
+      }
+      function percentage(done, target) {
+        return target > 0 ? Math.min(100, Math.round(done / target * 100)) : 0;
+      }
+      function currentMinuteDefault(taskKey, dateISO) {
+        if (taskKey !== 'workout') return taskByKey[taskKey].defaultMinutes;
+        var day = (dateISO ? new Date(dateISO + 'T12:00:00') : new Date()).getDay();
+        return day === 0 || day === 6 ? 60 : 20;
+      }
+      function showToast(message, id) {
+        var toast = document.getElementById('toast');
+        var undoButton = document.getElementById('undoButton');
+        document.getElementById('toastText').textContent = message;
+        undoId = id || null;
+        undoButton.hidden = !undoId;
+        toast.hidden = false;
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(function () {
+          toast.hidden = true;
+          undoId = null;
+        }, 4200);
+      }
+      function sortRecent(records) {
+        return records.slice().sort(function (a, b) {
+          return (b.date + (b.createdAt || '')).localeCompare(a.date + (a.createdAt || ''));
+        });
+      }
+      function recordMarkup(record, withDelete) {
+        var task = taskByKey[record.task];
+        return '<div class="log-item">' +
+          '<span class="record-marker" style="background:' + task.color + '"></span>' +
+          '<div class="record-copy"><b>' + escapeHtml(task.label) + ' · ' + formatDate(record.date) + '</b>' +
+          '<span>' + (record.note ? escapeHtml(record.note) : escapeHtml(task.hint)) + '</span></div>' +
+          '<span class="record-minutes">' + formatMinutes(record.minutes) + '</span>' +
+          (withDelete ? '<button class="record-delete" data-delete="' + escapeHtml(record.id) + '" type="button">删除</button>' : '') +
+          '</div>';
+      }
+      function renderHeader() {
+        document.getElementById('rangeLabel').textContent = formatRange(state.weekStart);
+      }
+      function renderHero(data) {
+        var totalDone = TASKS.reduce(function (sum, task) { return sum + data[task.key]; }, 0);
+        var totalTarget = TASKS.reduce(function (sum, task) { return sum + Number(state.targets[task.key]); }, 0);
+        var progress = percentage(totalDone, totalTarget);
+        document.getElementById('heroTitle').textContent = formatMinutes(totalDone);
+        document.getElementById('heroDetail').textContent = progress ? '已完成本周计划的 ' + progress + '% · 继续守住一个个小锚点。' : '从一个小行动开始，系统就会开始运转。';
+        var bar = document.getElementById('heroBar');
+        bar.setAttribute('aria-valuenow', progress);
+        bar.firstElementChild.style.width = progress + '%';
+        var lines = [
+          { label: '挣钱', keys: ['job', 'stock'], color: 'var(--money)' },
+          { label: '教育', keys: ['childRead', 'social', 'theory'], color: 'var(--education)' },
+          { label: '身体', keys: ['workout'], color: 'var(--body)' },
+          { label: '心理', keys: ['reading'], color: 'var(--mind)' }
+        ];
+        document.getElementById('mainLineSummary').innerHTML = lines.map(function (line) {
+          var done = line.keys.reduce(function (sum, key) { return sum + data[key]; }, 0);
+          var target = line.keys.reduce(function (sum, key) { return sum + Number(state.targets[key]); }, 0);
+          return '<article class="summary-card" style="border-top:3px solid ' + line.color + '">' +
+            '<span>' + line.label + '</span><b>' + percentage(done, target) + '%</b>' +
+            '<small>' + formatMinutes(done) + ' / ' + formatMinutes(target) + '</small></article>';
+        }).join('');
+      }
+      function todaySuggestions() {
+        var today = new Date();
+        var weekend = today.getDay() === 0 || today.getDay() === 6;
+        var dateNumber = today.getDate();
+        var moneyTask = dateNumber % 2 ? 'job' : 'stock';
+        var output = [
+          { task: 'workout', minutes: weekend ? 60 : 20 },
+          { task: 'childRead', minutes: 30 },
+          { task: moneyTask, minutes: 75 }
+        ];
+        if (weekend) {
+          output.push({ task: 'reading', minutes: 60 });
+          output.push({ task: 'social', minutes: 120 });
+        }
+        return output;
+      }
+      function renderToday() {
+        var suggestions = todaySuggestions();
+        var weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        document.getElementById('todayCaption').textContent = weekdayNames[new Date().getDay()];
+        document.getElementById('todayFocus').innerHTML = suggestions.map(function (item) {
+          var task = taskByKey[item.task];
+          return '<div class="focus-item"><span class="focus-dot" style="background:' + task.color + '"></span>' +
+            '<div class="focus-copy"><b>' + task.label + '</b><span>' + task.hint + '</span></div>' +
+            '<span class="focus-time">' + formatMinutes(item.minutes) + '</span></div>';
+        }).join('');
+
+        var quickItems = [
+          { task: 'workout', minutes: currentMinuteDefault('workout') },
+          { task: 'job', minutes: 75 },
+          { task: 'stock', minutes: 75 },
+          { task: 'childRead', minutes: 30 },
+          { task: 'reading', minutes: 60 }
+        ];
+        document.getElementById('quickGrid').innerHTML = quickItems.map(function (item) {
+          var task = taskByKey[item.task];
+          return '<button class="quick-add ' + task.group + '" type="button" data-quick="' + task.key + '" data-minutes="' + item.minutes + '">' +
+            '<span class="quick-name">' + task.label + '</span><span class="quick-time">记录 ' + formatMinutes(item.minutes) + '</span></button>';
+        }).join('');
+
+        var recent = sortRecent(state.records).slice(0, 5);
+        document.getElementById('recentList').innerHTML = recent.length ?
+          recent.map(function (record) { return recordMarkup(record, true); }).join('') :
+          '<p class="empty">还没有任何记录。先点一次快速记一笔。</p>';
+      }
+      function renderWeek(data, records) {
+        var difference = data.job - data.stock;
+        var title = document.getElementById('balanceTitle');
+        var text = document.getElementById('balanceText');
+        if (data.job === 0 && data.stock === 0) {
+          title.textContent = '本周双引擎还未启动';
+          text.textContent = '找工作和股票投资各安排三个专注块，先从其中一个开始。';
+        } else if (Math.abs(difference) <= 20) {
+          title.textContent = '找工作与投资投入均衡';
+          text.textContent = '找工作 ' + formatMinutes(data.job) + ' · 股票投资 ' + formatMinutes(data.stock) + '。';
+        } else if (difference > 0) {
+          title.textContent = '投资线需要补 ' + formatMinutes(difference);
+          text.textContent = '求职目前领先；下一段挣钱专注时间留给投资研究或复盘。';
+        } else {
+          title.textContent = '求职线需要补 ' + formatMinutes(Math.abs(difference));
+          text.textContent = '投资目前领先；下一段挣钱专注时间留给求职推进。';
+        }
+        document.getElementById('trackList').innerHTML = TASKS.map(function (task) {
+          var done = data[task.key];
+          var target = Number(state.targets[task.key]);
+          var progress = percentage(done, target);
+          return '<div class="track-row"><span class="record-marker" style="background:' + task.color + '"></span>' +
+            '<div><h3>' + task.label + '</h3><div class="track-sub">' + task.hint + '</div></div>' +
+            '<div class="track-value"><b>' + formatMinutes(done) + '</b> / ' + formatMinutes(target) + '</div>' +
+            '<div class="bar"><span style="width:' + progress + '%;background:' + task.color + '"></span></div></div>';
+        }).join('');
+
+        var todayISO = localDateISO(new Date());
+        var names = ['一', '二', '三', '四', '五', '六', '日'];
+        document.getElementById('daySummary').innerHTML = datesForWeek(state.weekStart).map(function (date, index) {
+          var minutes = records.filter(function (record) { return record.date === date; }).reduce(function (sum, record) { return sum + Number(record.minutes); }, 0);
+          return '<div class="' + (date === todayISO ? 'today' : '') + '"><span>周' + names[index] + '</span><b>' + (minutes ? formatMinutes(minutes).replace(' 小时 ', 'h').replace(' 分', 'm').replace(' 分钟', 'm') : '—') + '</b></div>';
+        }).join('');
+        document.getElementById('weekRecordCount').textContent = records.length + ' 条';
+        document.getElementById('weekLog').innerHTML = records.length ?
+          sortRecent(records).map(function (record) { return recordMarkup(record, true); }).join('') :
+          '<p class="empty">本周尚未记录事项。</p>';
+      }
+      function renderSettings() {
+        document.getElementById('targetList').innerHTML = TASKS.map(function (task) {
+          return '<div class="target-row"><label for="target-' + task.key + '">' + task.label + '<span>' + task.hint + '</span></label>' +
+            '<input id="target-' + task.key + '" type="number" min="0" max="2000" step="5" value="' + Number(state.targets[task.key]) + '" data-target="' + task.key + '" aria-label="' + task.label + '每周目标分钟"></div>';
+        }).join('');
+      }
+      function populateForm() {
+        document.getElementById('recordTask').innerHTML = TASKS.map(function (task) {
+          return '<option value="' + task.key + '">' + task.label + '</option>';
+        }).join('');
+        document.getElementById('recordTask').value = 'job';
+        document.getElementById('recordDate').value = localDateISO(new Date());
+        document.getElementById('recordMinutes').value = currentMinuteDefault('job');
+      }
+      function addRecord(taskKey, minutes, note, dateISO) {
+        var today = localDateISO(new Date());
+        var date = dateISO || today;
+        var record = {
+          id: window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : String(Date.now()) + Math.random(),
+          date: date,
+          task: taskKey,
+          minutes: Math.round(Number(minutes)),
+          note: String(note || '').slice(0, 180),
+          createdAt: new Date().toISOString()
+        };
+        state.records.push(record);
+        state.weekStart = mondayFor(record.date);
+        saveState();
+        render();
+        showToast('已记录 ' + taskByKey[taskKey].label + ' · ' + formatMinutes(record.minutes) +
+          (date === today ? '' : ' · ' + formatDate(date)), record.id);
+      }
+      function exportData() {
+        var payload = JSON.stringify({ exportedAt: new Date().toISOString(), app: '四线生活系统', data: state }, null, 2);
+        var blob = new Blob([payload], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'four-lines-system-backup-' + localDateISO(new Date()) + '.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showToast('备份已导出。');
+      }
+      function importData(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var payload = JSON.parse(String(reader.result || ''));
+            var imported = normaliseState(payload && payload.data ? payload.data : payload);
+            if (!imported) throw new Error('invalid');
+            if (!window.confirm('导入会覆盖当前手机上的记录和目标，继续吗？')) return;
+            state = imported;
+            saveState();
+            render();
+            showToast('备份已导入。');
+          } catch (error) {
+            showToast('无法读取该备份文件，请选择本小程序导出的 JSON。');
+          }
+        };
+        reader.readAsText(file);
+      }
+      function changeScreen(screen) {
+        ['today', 'week', 'settings'].forEach(function (name) {
+          document.getElementById(name + 'Screen').classList.toggle('active', name === screen);
+          document.querySelector('[data-screen="' + name + '"]').classList.toggle('active', name === screen);
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      function render() {
+        var records = weekRecords();
+        var data = totals(records);
+        renderHeader();
+        renderHero(data);
+        renderToday();
+        renderWeek(data, records);
+        renderSettings();
+      }
+
+      document.addEventListener('click', function (event) {
+        var weekButton = event.target.closest('[data-week]');
+        if (weekButton) {
+          var direction = weekButton.getAttribute('data-week');
+          if (direction === 'prev') state.weekStart = plusDays(state.weekStart, -7);
+          if (direction === 'next') state.weekStart = plusDays(state.weekStart, 7);
+          if (direction === 'today') state.weekStart = mondayFor(new Date());
+          saveState();
+          render();
+          return;
+        }
+        var screenButton = event.target.closest('[data-screen]');
+        if (screenButton) {
+          changeScreen(screenButton.getAttribute('data-screen'));
+          return;
+        }
+        var quick = event.target.closest('[data-quick]');
+        if (quick) {
+          addRecord(quick.getAttribute('data-quick'), quick.getAttribute('data-minutes'), '');
+          return;
+        }
+        var deleteButton = event.target.closest('[data-delete]');
+        if (deleteButton) {
+          var id = deleteButton.getAttribute('data-delete');
+          state.records = state.records.filter(function (record) { return record.id !== id; });
+          saveState();
+          render();
+          showToast('该记录已删除。');
+          return;
+        }
+        if (event.target.id === 'undoButton' && undoId) {
+          state.records = state.records.filter(function (record) { return record.id !== undoId; });
+          saveState();
+          render();
+          document.getElementById('toast').hidden = true;
+          undoId = null;
+          return;
+        }
+        if (event.target.id === 'syncIncome') {
+          state.targets.stock = Number(state.targets.job) || 0;
+          saveState();
+          render();
+          showToast('投资目标已同步为求职目标。');
+          return;
+        }
+        if (event.target.id === 'importData') {
+          document.getElementById('importFile').click();
+          return;
+        }
+        if (event.target.id === 'exportData') {
+          exportData();
+          return;
+        }
+        if (event.target.id === 'clearRecords') {
+          if (window.confirm('确定清空全部已记录事项吗？周目标会保留。')) {
+            state.records = [];
+            saveState();
+            render();
+            showToast('记录已清空。');
+          }
+        }
+      });
+      document.addEventListener('change', function (event) {
+        var target = event.target;
+        if (target.id === 'importFile') {
+          importData(target.files && target.files[0]);
+          target.value = '';
+          return;
+        }
+        if (target.matches('[data-target]')) {
+          state.targets[target.getAttribute('data-target')] = Math.max(0, Math.min(2000, Number(target.value) || 0));
+          saveState();
+          render();
+          return;
+        }
+        if (target.id === 'recordTask' || target.id === 'recordDate') {
+          document.getElementById('recordMinutes').value = currentMinuteDefault(
+            document.getElementById('recordTask').value,
+            document.getElementById('recordDate').value
+          );
+        }
+      });
+      document.getElementById('customForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var task = document.getElementById('recordTask').value;
+        var date = document.getElementById('recordDate').value;
+        var minutes = Number(document.getElementById('recordMinutes').value);
+        var note = document.getElementById('recordNote').value.trim();
+        if (!taskByKey[task] || !Number.isFinite(minutes) || minutes < 1) {
+          showToast('请填写有效的项目和分钟数。');
+          return;
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          showToast('请选择一个有效日期。');
+          return;
+        }
+        addRecord(task, minutes, note, date);
+        document.getElementById('recordNote').value = '';
+        // 日期保留在刚选的那天，方便连着补记同一天的几笔。
+        document.getElementById('recordDate').value = date;
+        document.getElementById('recordMinutes').value = currentMinuteDefault(task, date);
+      });
+      window.addEventListener('storage', function (event) {
+        if (event.key === STORAGE_KEY) {
+          state = loadState();
+          render();
+        }
+      });
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('./sw.js').catch(function () {
+            /* The app remains fully usable online if offline caching is unavailable. */
+          });
+        });
+      }
+
+      populateForm();
+      render();
+    }());
+  </script>
+</body>
+</html>

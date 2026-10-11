@@ -1,0 +1,10 @@
+# 个人记录绝不入库：导出的备份文件一律排除
+four-lines-system-backup-*.json
+*backup*.json
+*-backup.json
+
+# 操作系统 / 压缩残留
+.DS_Store
+__MACOSX/
+Thumbs.db
+desktop.ini

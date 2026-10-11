@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5f1">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <title>四线生活系统</title>
+  <style>
+    :root {
+      --ink: #26322e;
+      --muted: #68736e;
+      --paper: #f6f5f1;
+      --panel: #ffffff;
+      --line: #dfe4dd;
+      --money: #2f7e65;
+      --education: #7769af;
+      --body: #c76a4a;
+      --mind: #3d7597;
+      --soft-money: #e2f0e9;
+      --soft-education: #ede9f7;
+      --soft-body: #f8e9e2;
+      --soft-mind: #e4f0f5;
+      --warning: #9b5d13;
+      --danger: #ab3f39;
+      --shadow: 0 10px 28px rgba(33, 45, 39, .07);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.5;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(47, 126, 101, .28);
+      outline-offset: 2px;
+    }
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 56px;
+    }
+    .topbar {
+      display: flex;
+      gap: 24px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--money);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin-bottom: 8px;
+      font-size: clamp(28px, 5vw, 42px);
+      letter-spacing: -.04em;
+      line-height: 1.08;
+    }
+    h2 { margin-bottom: 4px; font-size: 20px; letter-spacing: -.02em; }
+    h3 { margin-bottom: 4px; font-size: 15px; }
+    .subtle { margin-bottom: 0; color: var(--muted); font-size: 14px; }
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .week-label { min-width: 166px; text-align: center; font-weight: 700; }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 12px;
+      color: var(--ink);
+      background: var(--panel);
+      font-weight: 650;
+      font-size: 14px;
+    }
+    .btn:hover { background: #f6f8f5; }
+    .btn.primary { border-color: var(--money); color: #fff; background: var(--money); }
+    .btn.primary:hover { background: #216952; }
+    .btn.ghost { border-color: transparent; background: transparent; }
+    .btn.danger { color: var(--danger); }
+    .overview {
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .metric, .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .metric { min-height: 115px; padding: 17px; }
+    .metric .label { color: var(--muted); font-size: 13px; }
+    .metric .number { margin-top: 6px; font-size: 28px; font-weight: 750; letter-spacing: -.04em; }
+    .metric .detail { margin-top: 2px; color: var(--muted); font-size: 13px; }
+    .metric.money { border-top: 4px solid var(--money); }
+    .metric.education { border-top: 4px solid var(--education); }
+    .metric.body { border-top: 4px solid var(--body); }
+    .balance {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 17px 20px;
+      background: linear-gradient(135deg, var(--soft-money), #f9fbf9);
+      border-color: #cce2d7;
+    }
+    .balance strong { font-size: 17px; }
+    .balance p { margin: 4px 0 0; color: #456358; font-size: 14px; }
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(330px, .85fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .panel { padding: 20px; }
+    .panel + .panel { margin-top: 18px; }
+    .section-head {
+      display: flex;
+      gap: 16px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+    .tracks { display: grid; gap: 10px; }
+    .track {
+      display: grid;
+      grid-template-columns: 12px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .track:last-child { border-bottom: 0; }
+    .track-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .track h3 { margin: 0; }
+    .track small { display: block; margin-top: 2px; color: var(--muted); }
+    .track-value { min-width: 110px; color: var(--muted); text-align: right; font-size: 13px; }
+    .track-value b { color: var(--ink); font-size: 15px; }
+    .progress {
+      grid-column: 2 / 4;
+      width: 100%;
+      height: 7px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #edf0ec;
+    }
+    .progress > span { display: block; height: 100%; border-radius: inherit; transition: width .25s ease; }
+    .quick-form { display: grid; gap: 12px; }
+    .field { display: grid; gap: 6px; }
+    label { color: var(--muted); font-size: 13px; font-weight: 650; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cfd7cf;
+      border-radius: 9px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: #fff;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-actions { display: flex; gap: 9px; align-items: center; }
+    .flash { min-height: 20px; margin: 0; color: var(--money); font-size: 13px; }
+    .plan-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .plan-item {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .plan-item:last-child { border-bottom: 0; }
+    .plan-item b { color: var(--muted); font-size: 12px; }
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(126px, 1fr));
+      overflow-x: auto;
+      gap: 8px;
+      padding-bottom: 4px;
+    }
+    .day {
+      min-height: 160px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .day.today { border-color: var(--money); box-shadow: inset 0 0 0 1px var(--money); }
+    .day-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .day-name { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .day-num { font-weight: 800; }
+    .record-chip {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      border: 0;
+      border-left: 3px solid var(--line);
+      border-radius: 5px;
+      padding: 5px 6px;
+      color: var(--ink);
+      background: #f6f8f6;
+      text-align: left;
+      font-size: 12px;
+    }
+    .record-chip:hover { filter: brightness(.97); }
+    .empty-day { color: #9aa49e; font-size: 12px; }
+    .records { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .records th, .records td { padding: 10px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .records th { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .records tr:last-child td { border-bottom: 0; }
+    .records .time { text-align: right; white-space: nowrap; font-weight: 700; }
+    .delete-record {
+      border: 0;
+      padding: 2px 5px;
+      color: var(--danger);
+      background: transparent;
+      font-size: 13px;
+    }
+    .target-list { display: grid; gap: 10px; }
+    .target-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 86px;
+      gap: 12px;
+      align-items: center;
+    }
+    .target-row label { color: var(--ink); }
+    .target-row span { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+    .target-row input { padding: 8px 9px; text-align: right; }
+    .rule {
+      margin: 16px 0 0;
+      padding: 12px;
+      border-radius: 10px;
+      color: #496358;
+      background: var(--soft-money);
+      font-size: 13px;
+    }
+    .utility-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .empty-state { padding: 16px 0 6px; color: var(--muted); font-size: 14px; }
+    .footer-note { margin: 22px 4px 0; color: var(--muted); font-size: 12px; }
+    /* 窄屏（手机）才出现：指向为触屏做过的移动版，桌面宽屏下不占空间。 */
+    .mobile-hint { display: none; }
+    @media (max-width: 760px) {
+      .mobile-hint {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        border: 1px solid #c9e0d3;
+        border-radius: 12px;
+        padding: 12px 13px;
+        color: #2c5748;
+        background: var(--soft-money);
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .mobile-hint b { margin-left: auto; white-space: nowrap; }
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    @media (max-width: 900px) {
+      .overview { grid-template-columns: repeat(2, 1fr); }
+      .balance { grid-column: 1 / -1; }
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .shell { width: min(100% - 22px, 1180px); padding-top: 22px; }
+      .topbar { display: block; }
+      .week-nav { justify-content: flex-start; margin-top: 18px; }
+      .week-label { min-width: 0; }
+      .overview { grid-template-columns: 1fr 1fr; }
+      .metric { min-height: 100px; padding: 14px; }
+      .metric .number { font-size: 23px; }
+      .panel { padding: 16px; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 4px; }
+      .track { grid-template-columns: 10px minmax(0, 1fr); }
+      .track-value { grid-column: 2; text-align: left; }
+      .progress { grid-column: 2; }
+      .form-row { grid-template-columns: 1fr; }
+      .plan-item { grid-template-columns: 65px 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <a class="mobile-hint" href="./mobile.html">
+      <span>检测到小屏幕。移动版是为单手记录做的，还能加到主屏幕离线使用。</span>
+      <b>打开移动版 →</b>
+    </a>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Personal operating system</p>
+        <h1>四线生活系统</h1>
+        <p class="subtle">用周节奏守住身体、陪伴、挣钱和心理恢复。</p>
+      </div>
+      <nav class="week-nav" aria-label="选择周次">
+        <button class="btn" type="button" data-week-nav="prev" aria-label="上一周">←</button>
+        <button class="btn ghost" type="button" data-week-nav="today">本周</button>
+        <strong class="week-label" id="weekLabel"></strong>
+        <button class="btn" type="button" data-week-nav="next" aria-label="下一周">→</button>
+      </nav>
+    </header>
+
+    <section class="overview" aria-label="本周概览">
+      <article class="metric money">
+        <div class="label">挣钱主线</div>
+        <div class="number" id="moneyProgress">0%</div>
+        <div class="detail" id="moneyDetail"></div>
+      </article>
+      <article class="metric education">
+        <div class="label">教育主线</div>
+        <div class="number" id="educationProgress">0%</div>
+        <div class="detail" id="educationDetail"></div>
+      </article>
+      <article class="metric body">
+        <div class="label">身体与心理</div>
+        <div class="number" id="healthProgress">0%</div>
+        <div class="detail" id="healthDetail"></div>
+      </article>
+      <article class="metric balance">
+        <strong id="balanceTitle">先安排本周的双引擎</strong>
+        <p id="balanceText">找工作和股票投资各保留同样数量的专注时间块。</p>
+      </article>
+    </section>
+
+    <div class="main-grid">
+      <div>
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>本周轨道</h2>
+              <p>完成度按实际记录计算；目标可在右侧调整。</p>
+            </div>
+          </div>
+          <div class="tracks" id="trackList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>周视图</h2>
+              <p>点击已记录事项可快速查看；记录会保存在此浏览器中。</p>
+            </div>
+          </div>
+          <div class="week-grid" id="weekGrid" aria-label="本周记录"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>本周记录</h2>
+              <p>只记录已完成的行动，不把计划当作完成。</p>
+            </div>
+          </div>
+          <div id="recordTableWrap"></div>
+        </section>
+      </div>
+
+      <aside>
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>快速记录</h2>
+              <p>记录一次行动，系统会自动归入本周。</p>
+            </div>
+          </div>
+          <form class="quick-form" id="recordForm">
+            <div class="form-row">
+              <div class="field">
+                <label for="recordDate">日期</label>
+                <input id="recordDate" name="date" type="date" required>
+              </div>
+              <div class="field">
+                <label for="recordTask">项目</label>
+                <select id="recordTask" name="task" required></select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="recordMinutes">投入分钟</label>
+              <input id="recordMinutes" name="minutes" type="number" min="1" max="720" step="5" required>
+            </div>
+            <div class="field">
+              <label for="recordNote">一句记录 <span class="sr-only">可选</span></label>
+              <textarea id="recordNote" name="note" maxlength="180" placeholder="例如：完成目标岗位简历第一版"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">保存记录</button>
+              <button class="btn ghost" type="button" id="resetForm">清空</button>
+            </div>
+            <p class="flash" id="flash" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>本周建议排程</h2>
+              <p>这是保护时间的骨架，不代表已经完成。</p>
+            </div>
+          </div>
+          <ul class="plan-list" id="planList"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>目标设置</h2>
+              <p>单位为分钟；求职与投资建议保持相同。</p>
+            </div>
+          </div>
+          <div class="target-list" id="targetList"></div>
+          <p class="rule">规则：先锁住 Workout、阅读和亲子陪伴；再将剩余专注时间按“求职 : 投资 : 育儿理论 = 2 : 2 : 1”分配。</p>
+          <div class="utility-row">
+            <button class="btn" type="button" id="syncIncomeTargets">同步挣钱目标</button>
+            <button class="btn" type="button" id="copyPlan">复制本周摘要</button>
+            <button class="btn" type="button" id="exportData">导出数据</button>
+            <button class="btn danger" type="button" id="clearRecords">清空记录</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <p class="footer-note">本地优先：数据仅保存在你当前浏览器的本地存储中。导出后可自行备份。</p>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'four-lines-system-v1';
+      var TASKS = [
+        { key: 'job', label: '找新工作', group: 'money', color: 'var(--money)', soft: 'var(--soft-money)', defaultMinutes: 75, description: '高匹配投递、简历、联系或面试准备' },
+        { key: 'stock', label: '股票投资', group: 'money', color: 'var(--money)', soft: 'var(--soft-money)', defaultMinutes: 75, description: '研究、复盘和投资决策记录' },
+        { key: 'childRead', label: '陪着读书', group: 'education', color: 'var(--education)', soft: 'var(--soft-education)', defaultMinutes: 30, description: '稳定陪伴与共同阅读' },
+        { key: 'social', label: '陪着社交', group: 'education', color: 'var(--education)', soft: 'var(--soft-education)', defaultMinutes: 120, description: '社交活动或高质量陪伴' },
+        { key: 'theory', label: '育儿理论学习', group: 'education', color: 'var(--education)', soft: 'var(--soft-education)', defaultMinutes: 60, description: '学习并转化为一个实践动作' },
+        { key: 'workout', label: 'Workout', group: 'body', color: 'var(--body)', soft: 'var(--soft-body)', defaultMinutes: 20, description: '工作日 20 分钟，休息日 60 分钟' },
+        { key: 'reading', label: 'Read', group: 'mind', color: 'var(--mind)', soft: 'var(--soft-mind)', defaultMinutes: 60, description: '休息日的恢复性阅读' }
+      ];
+      var taskByKey = {};
+      TASKS.forEach(function (task) { taskByKey[task.key] = task; });
+
+      function localDateISO(date) {
+        var offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+      }
+      function mondayFor(input) {
+        var date = typeof input === 'string' ? new Date(input + 'T12:00:00') : new Date(input);
+        var day = date.getDay() || 7;
+        date.setDate(date.getDate() - day + 1);
+        date.setHours(12, 0, 0, 0);
+        return localDateISO(date);
+      }
+      function plusDays(iso, days) {
+        var date = new Date(iso + 'T12:00:00');
+        date.setDate(date.getDate() + days);
+        return localDateISO(date);
+      }
+      function datesForWeek(weekStart) {
+        return Array.from({ length: 7 }, function (_, index) { return plusDays(weekStart, index); });
+      }
+      function sameWeek(date, weekStart) {
+        return date >= weekStart && date <= plusDays(weekStart, 6);
+      }
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, function (character) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character];
+        });
+      }
+      function formatMinutes(minutes) {
+        var value = Math.round(Number(minutes) || 0);
+        if (value < 60) return value + ' 分钟';
+        var hours = Math.floor(value / 60);
+        var rest = value % 60;
+        return rest ? hours + ' 小时 ' + rest + ' 分' : hours + ' 小时';
+      }
+      function formatShortDate(iso) {
+        var date = new Date(iso + 'T12:00:00');
+        return (date.getMonth() + 1) + '/' + date.getDate();
+      }
+      function formatRange(weekStart) {
+        var first = new Date(weekStart + 'T12:00:00');
+        var last = new Date(plusDays(weekStart, 6) + 'T12:00:00');
+        return (first.getMonth() + 1) + '月' + first.getDate() + '日 — ' + (last.getMonth() + 1) + '月' + last.getDate() + '日';
+      }
+      function newState() {
+        return {
+          weekStart: mondayFor(new Date()),
+          targets: {
+            job: 225,
+            stock: 225,
+            childRead: 150,
+            social: 120,
+            theory: 120,
+            workout: 220,
+            reading: 120
+          },
+          records: []
+        };
+      }
+      function loadState() {
+        try {
+          var stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (!stored || typeof stored !== 'object') return newState();
+          var fresh = newState();
+          fresh.weekStart = typeof stored.weekStart === 'string' ? stored.weekStart : fresh.weekStart;
+          fresh.targets = Object.assign(fresh.targets, stored.targets || {});
+          fresh.records = Array.isArray(stored.records) ? stored.records.filter(function (record) {
+            return record && taskByKey[record.task] && typeof record.date === 'string' && Number(record.minutes) > 0;
+          }) : [];
+          return fresh;
+        } catch (error) {
+          return newState();
+        }
+      }
+      var state = loadState();
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+      function recordsThisWeek() {
+        return state.records.filter(function (record) { return sameWeek(record.date, state.weekStart); });
+      }
+      function totalsFor(records) {
+        var totals = {};
+        TASKS.forEach(function (task) { totals[task.key] = 0; });
+        records.forEach(function (record) {
+          totals[record.task] = (totals[record.task] || 0) + Number(record.minutes);
+        });
+        return totals;
+      }
+      function percent(done, target) {
+        return target > 0 ? Math.min(100, Math.round(done / target * 100)) : 0;
+      }
+      function showFlash(text) {
+        var flash = document.getElementById('flash');
+        flash.textContent = text;
+        window.clearTimeout(showFlash.timer);
+        showFlash.timer = window.setTimeout(function () { flash.textContent = ''; }, 2600);
+      }
+      function groupProgress(totals, keys) {
+        var done = keys.reduce(function (sum, key) { return sum + totals[key]; }, 0);
+        var target = keys.reduce(function (sum, key) { return sum + Number(state.targets[key]); }, 0);
+        return { done: done, target: target, percent: percent(done, target) };
+      }
+      function renderOverview(totals) {
+        var money = groupProgress(totals, ['job', 'stock']);
+        var education = groupProgress(totals, ['childRead', 'social', 'theory']);
+        var health = groupProgress(totals, ['workout', 'reading']);
+        document.getElementById('moneyProgress').textContent = money.percent + '%';
+        document.getElementById('moneyDetail').textContent = formatMinutes(money.done) + ' / ' + formatMinutes(money.target);
+        document.getElementById('educationProgress').textContent = education.percent + '%';
+        document.getElementById('educationDetail').textContent = formatMinutes(education.done) + ' / ' + formatMinutes(education.target);
+        document.getElementById('healthProgress').textContent = health.percent + '%';
+        document.getElementById('healthDetail').textContent = formatMinutes(health.done) + ' / ' + formatMinutes(health.target);
+
+        var difference = totals.job - totals.stock;
+        var title = document.getElementById('balanceTitle');
+        var text = document.getElementById('balanceText');
+        if (totals.job === 0 && totals.stock === 0) {
+          title.textContent = '双引擎还没有启动';
+          text.textContent = '本周各安排 3 个专注块：找工作与股票投资不共用时间。';
+        } else if (Math.abs(difference) <= 20) {
+          title.textContent = '挣钱双引擎很均衡';
+          text.textContent = '找工作 ' + formatMinutes(totals.job) + ' · 股票投资 ' + formatMinutes(totals.stock) + '。';
+        } else if (difference > 0) {
+          title.textContent = '投资线需要补 ' + formatMinutes(difference);
+          text.textContent = '找工作已投入 ' + formatMinutes(totals.job) + '，投资已投入 ' + formatMinutes(totals.stock) + '。';
+        } else {
+          title.textContent = '求职线需要补 ' + formatMinutes(Math.abs(difference));
+          text.textContent = '找工作已投入 ' + formatMinutes(totals.job) + '，投资已投入 ' + formatMinutes(totals.stock) + '。';
+        }
+      }
+      function renderTracks(totals) {
+        var html = TASKS.map(function (task) {
+          var done = totals[task.key];
+          var target = Number(state.targets[task.key]) || 0;
+          var progress = percent(done, target);
+          return '<article class="track">' +
+            '<span class="track-dot" style="background:' + task.color + '"></span>' +
+            '<div><h3>' + task.label + '</h3><small>' + task.description + '</small></div>' +
+            '<div class="track-value"><b>' + formatMinutes(done) + '</b> / ' + formatMinutes(target) + '</div>' +
+            '<div class="progress" aria-label="' + task.label + '完成 ' + progress + '%"><span style="width:' + progress + '%;background:' + task.color + '"></span></div>' +
+          '</article>';
+        }).join('');
+        document.getElementById('trackList').innerHTML = html;
+      }
+      function renderWeekGrid(records) {
+        var dates = datesForWeek(state.weekStart);
+        var weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        var today = localDateISO(new Date());
+        var html = dates.map(function (date, index) {
+          var items = records.filter(function (record) { return record.date === date; });
+          var content = items.length ? items.map(function (record) {
+            var task = taskByKey[record.task];
+            return '<button class="record-chip" type="button" data-fill-task="' + record.task + '" title="用此项目再记一笔" style="border-left-color:' + task.color + ';background:' + task.soft + '">' +
+              escapeHtml(task.label) + ' · ' + formatMinutes(record.minutes) +
+            '</button>';
+          }).join('') : '<p class="empty-day">暂未记录</p>';
+          return '<article class="day' + (date === today ? ' today' : '') + '">' +
+            '<div class="day-head"><span class="day-name">' + weekNames[index] + '</span><span class="day-num">' + formatShortDate(date) + '</span></div>' +
+            content +
+          '</article>';
+        }).join('');
+        document.getElementById('weekGrid').innerHTML = html;
+      }
+      function renderRecords(records) {
+        var wrap = document.getElementById('recordTableWrap');
+        if (!records.length) {
+          wrap.innerHTML = '<p class="empty-state">这一周还没有记录。先从一个 20 分钟 Workout 或一个 75 分钟专注块开始。</p>';
+          return;
+        }
+        var sorted = records.slice().sort(function (a, b) {
+          return (b.date + b.createdAt).localeCompare(a.date + a.createdAt);
+        });
+        wrap.innerHTML = '<table class="records"><thead><tr><th>日期</th><th>项目与记录</th><th class="time">投入</th><th><span class="sr-only">操作</span></th></tr></thead><tbody>' +
+          sorted.map(function (record) {
+            var task = taskByKey[record.task];
+            return '<tr><td>' + formatShortDate(record.date) + '</td><td><b>' + escapeHtml(task.label) + '</b>' +
+              (record.note ? '<br><span class="subtle">' + escapeHtml(record.note) + '</span>' : '') +
+              '</td><td class="time">' + formatMinutes(record.minutes) + '</td>' +
+              '<td><button type="button" class="delete-record" data-delete-id="' + escapeHtml(record.id) + '">删除</button></td></tr>';
+          }).join('') + '</tbody></table>';
+      }
+      function renderPlans() {
+        var html = [
+          ['工作日', 'Workout 20 分钟 × 5；安排 4–5 次陪读。'],
+          ['周一 / 周四', '找工作：各 75 分钟深度块。'],
+          ['周二 / 周五', '股票投资：各 75 分钟研究或复盘块。'],
+          ['周三', '育儿理论：60 分钟，写下一条可实践的原则。'],
+          ['休息日', '每天 Workout 60 分钟 + Read 60 分钟。'],
+          ['周六 / 周日', '分别补一个投资与求职深度块；保留一段陪社交时间。']
+        ].map(function (item) {
+          return '<li class="plan-item"><b>' + item[0] + '</b><span>' + item[1] + '</span></li>';
+        }).join('');
+        document.getElementById('planList').innerHTML = html;
+      }
+      function renderTargets() {
+        document.getElementById('targetList').innerHTML = TASKS.map(function (task) {
+          return '<div class="target-row"><label for="target-' + task.key + '">' + task.label +
+            '<span>' + task.description + '</span></label>' +
+            '<input id="target-' + task.key + '" data-target="' + task.key + '" type="number" min="0" max="2000" step="5" value="' + Number(state.targets[task.key]) + '" aria-label="' + task.label + '每周目标分钟"></div>';
+        }).join('');
+      }
+      function populateTaskSelect() {
+        var select = document.getElementById('recordTask');
+        select.innerHTML = TASKS.map(function (task) {
+          return '<option value="' + task.key + '">' + task.label + '</option>';
+        }).join('');
+      }
+      function defaultMinutesFor(taskKey, dateValue) {
+        var task = taskByKey[taskKey];
+        if (taskKey === 'workout' && dateValue) {
+          var date = new Date(dateValue + 'T12:00:00');
+          return date.getDay() === 0 || date.getDay() === 6 ? 60 : 20;
+        }
+        return task.defaultMinutes;
+      }
+      function resetForm(taskKey) {
+        var dateInput = document.getElementById('recordDate');
+        var taskSelect = document.getElementById('recordTask');
+        var minutesInput = document.getElementById('recordMinutes');
+        dateInput.value = localDateISO(new Date());
+        taskSelect.value = taskKey || 'job';
+        minutesInput.value = defaultMinutesFor(taskSelect.value, dateInput.value);
+        document.getElementById('recordNote').value = '';
+      }
+      function render() {
+        var records = recordsThisWeek();
+        var totals = totalsFor(records);
+        document.getElementById('weekLabel').textContent = formatRange(state.weekStart);
+        renderOverview(totals);
+        renderTracks(totals);
+        renderWeekGrid(records);
+        renderRecords(records);
+        renderPlans();
+        renderTargets();
+      }
+      function copySummary() {
+        var totals = totalsFor(recordsThisWeek());
+        var lines = [
+          '四线生活系统 · ' + formatRange(state.weekStart),
+          '',
+          '找新工作：' + formatMinutes(totals.job) + ' / ' + formatMinutes(state.targets.job),
+          '股票投资：' + formatMinutes(totals.stock) + ' / ' + formatMinutes(state.targets.stock),
+          '陪着读书：' + formatMinutes(totals.childRead) + ' / ' + formatMinutes(state.targets.childRead),
+          '陪着社交：' + formatMinutes(totals.social) + ' / ' + formatMinutes(state.targets.social),
+          '育儿理论：' + formatMinutes(totals.theory) + ' / ' + formatMinutes(state.targets.theory),
+          'Workout：' + formatMinutes(totals.workout) + ' / ' + formatMinutes(state.targets.workout),
+          'Read：' + formatMinutes(totals.reading) + ' / ' + formatMinutes(state.targets.reading)
+        ];
+        var text = lines.join('\n');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            showFlash('本周摘要已复制。');
+          }).catch(function () {
+            window.prompt('复制下面的本周摘要：', text);
+          });
+        } else {
+          window.prompt('复制下面的本周摘要：', text);
+        }
+      }
+      function exportData() {
+        var payload = JSON.stringify({ exportedAt: new Date().toISOString(), app: '四线生活系统', data: state }, null, 2);
+        var blob = new Blob([payload], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'four-lines-system-backup-' + localDateISO(new Date()) + '.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showFlash('数据已导出。');
+      }
+
+      document.addEventListener('click', function (event) {
+        var nav = event.target.closest('[data-week-nav]');
+        if (nav) {
+          var action = nav.getAttribute('data-week-nav');
+          if (action === 'prev') state.weekStart = plusDays(state.weekStart, -7);
+          if (action === 'next') state.weekStart = plusDays(state.weekStart, 7);
+          if (action === 'today') state.weekStart = mondayFor(new Date());
+          saveState();
+          render();
+          return;
+        }
+        var deleteButton = event.target.closest('[data-delete-id]');
+        if (deleteButton) {
+          var id = deleteButton.getAttribute('data-delete-id');
+          state.records = state.records.filter(function (record) { return record.id !== id; });
+          saveState();
+          render();
+          showFlash('该记录已删除。');
+          return;
+        }
+        var fillButton = event.target.closest('[data-fill-task]');
+        if (fillButton) {
+          var taskKey = fillButton.getAttribute('data-fill-task');
+          resetForm(taskKey);
+          document.getElementById('recordNote').focus();
+          return;
+        }
+        if (event.target.id === 'resetForm') {
+          resetForm();
+          return;
+        }
+        if (event.target.id === 'syncIncomeTargets') {
+          state.targets.stock = Number(state.targets.job) || 0;
+          saveState();
+          render();
+          showFlash('股票投资目标已同步为找新工作目标。');
+          return;
+        }
+        if (event.target.id === 'copyPlan') {
+          copySummary();
+          return;
+        }
+        if (event.target.id === 'exportData') {
+          exportData();
+          return;
+        }
+        if (event.target.id === 'clearRecords') {
+          if (window.confirm('确定清空全部已记录事项吗？目标设置会保留。')) {
+            state.records = [];
+            saveState();
+            render();
+            showFlash('所有记录已清空。');
+          }
+        }
+      });
+      document.addEventListener('change', function (event) {
+        var target = event.target;
+        if (target.matches('[data-target]')) {
+          var taskKey = target.getAttribute('data-target');
+          state.targets[taskKey] = Math.max(0, Math.min(2000, Number(target.value) || 0));
+          saveState();
+          render();
+          return;
+        }
+        if (target.id === 'recordTask' || target.id === 'recordDate') {
+          var selectedTask = document.getElementById('recordTask').value;
+          var selectedDate = document.getElementById('recordDate').value;
+          document.getElementById('recordMinutes').value = defaultMinutesFor(selectedTask, selectedDate);
+        }
+      });
+      document.getElementById('recordForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var form = event.currentTarget;
+        var data = new FormData(form);
+        var date = String(data.get('date') || '');
+        var task = String(data.get('task') || '');
+        var minutes = Number(data.get('minutes'));
+        var note = String(data.get('note') || '').trim();
+        if (!date || !taskByKey[task] || !Number.isFinite(minutes) || minutes < 1) {
+          showFlash('请填写有效的日期、项目和投入时间。');
+          return;
+        }
+        state.records.push({
+          id: window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : String(Date.now()) + Math.random(),
+          date: date,
+          task: task,
+          minutes: Math.round(minutes),
+          note: note.slice(0, 180),
+          createdAt: new Date().toISOString()
+        });
+        state.weekStart = mondayFor(date);
+        saveState();
+        render();
+        resetForm(task);
+        showFlash('已记录：' + taskByKey[task].label + ' ' + formatMinutes(minutes) + '。');
+      });
+
+      populateTaskSelect();
+      resetForm();
+      render();
+    }());
+  </script>
+</body>
+</html>

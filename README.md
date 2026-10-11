@@ -1,2 +1,70 @@
-# four-lines-life-os
+# four-lines-life-os · 四线生活系统
+
 A private-by-design, browser-based life management tool for four core tracks.
+
+用周为单位，守住四条线：**挣钱、教育、身体、心理**。没有后端，没有账号，没有任何对外请求——所有数据只存在你自己浏览器的 `localStorage` 里。
+
+👉 **移动版（推荐，可加到手机主屏幕离线使用）**：[mobile.html](./mobile.html)
+👉 **桌面版**：[index.html](./index.html)
+
+## 四条线与七个记录项
+
+| 线 | 记录项 | 默认周目标 |
+|---|---|---|
+| 挣钱 | 找新工作 | 225 分钟 |
+| 挣钱 | 股票投资 | 225 分钟 |
+| 教育 | 陪着读书 | 150 分钟 |
+| 教育 | 陪着社交 | 120 分钟 |
+| 教育 | 育儿理论 | 120 分钟 |
+| 身体 | Workout | 220 分钟 |
+| 心理 | Read | 120 分钟 |
+
+两条设计规则写进了界面：
+
+1. **先锁底线**——Workout、Read、亲子陪伴先占住时间，剩下的才算可支配的深度时间。
+2. **可支配时间按「求职 : 投资 : 育儿理论 = 2 : 2 : 1」分配**。求职与投资的投入差超过 20 分钟时，首页会直接提示该补哪条。
+
+记录的是**已完成的行动**，不是计划。目标可以在「设置」里随时改。
+
+## 隐私
+
+- 全部代码加起来是 5 个静态文件，没有构建步骤、没有第三方依赖、没有分析脚本。
+- 不发起任何跨域请求。Service Worker 只缓存本仓库自己的文件。
+- 数据只写入 `localStorage`（键名 `four-lines-system-v1`），导出走浏览器本地下载。
+- 换设备靠「导出 JSON → 在新设备导入」，不经过任何服务器。
+- 本仓库只放程序代码，**不包含任何个人记录或备份文件**（见 `.gitignore`）。
+
+## 文件结构
+
+```
+index.html            桌面版（单文件，含全部 CSS/JS）
+mobile.html           移动版（单文件），PWA 入口
+mobile.webmanifest    PWA 清单
+sw.js                 Service Worker：HTML 网络优先、静态资源缓存优先
+icon.svg              矢量图标
+apple-touch-icon.png  iOS 主屏图标（iOS 只认 PNG）
+icon-192/512.png      Android / 桌面 PWA 图标
+favicon-32.png        标签页图标
+```
+
+## 本地运行
+
+直接双击 `index.html` 即可。但 `file://` 下 Service Worker 不会注册，所以**离线与装机能力需要 HTTPS**（例如 GitHub Pages），或起一个本地服务器：
+
+```bash
+python -m http.server 8000   # 然后访问 http://localhost:8000/mobile.html
+```
+
+## 维护提示
+
+`sw.js` 对 HTML 走**网络优先**，所以改完 `mobile.html` / `index.html` 推上去，联网打开就是新版本，不需要动版本号。只有**增删 `APP_SHELL` 里的条目**时，才需要把 `sw.js` 顶部的 `VERSION` 加一（`v2` → `v3`），好让旧缓存被清掉。
+
+## 已知限制
+
+- 手机和电脑之间不自动同步，需手动导出 / 导入。
+- 移动版「今天的锚点」按日期奇偶推荐求职或投资；桌面版「建议排程」按周一/周四求职、周二/周五投资。两套建议口径不同，仅影响提示文案，不影响数据。
+- 切到历史周次时，「今天的锚点」和「快速记一笔」仍以真实今天为准。补记过去的日期请用表单里的日期选择器。
+
+## License
+
+MIT
