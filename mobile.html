@@ -282,6 +282,15 @@
     .target-row label { color: var(--ink); font-size: 14px; }
     .target-row label span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 400; }
     .target-row input { padding: 9px; text-align: right; }
+    /* 子类目：缩进 + 左侧引导线，表示归属于上一条汇总行 */
+    .track-row.is-child, .target-row.is-child {
+      margin-left: 3px;
+      border-left: 2px solid var(--line);
+      padding-left: 13px;
+    }
+    .track-row.is-child h3 { font-size: 14px; font-weight: 600; }
+    .target-row.is-total label { font-weight: 750; }
+    .target-row.is-total b { color: var(--muted); text-align: right; font-size: 13px; font-weight: 700; }
     .utility-grid { display: grid; gap: 9px; margin-top: 16px; }
     .tip {
       margin: 14px 0 0;
@@ -506,8 +515,14 @@
       'use strict';
 
       var STORAGE_KEY = 'four-lines-system-v1';
+      var QUICK_MINUTES = 15;
+
+      // TASKS 只列「可记录的叶子项」——records / targets / totals 全部按叶子算。
+      // parent 指向 PARENTS 里的汇总行，汇总行自己不记时间，数字是子项之和。
       var TASKS = [
-        { key: 'job', label: '找新工作', group: 'money', color: 'var(--money)', defaultMinutes: 75, hint: '投递、简历、联系或面试准备' },
+        { key: 'jobEnglish', label: '英语', group: 'money', parent: 'jobline', color: 'var(--money)', defaultMinutes: 15, hint: '口语、听力、写作练习' },
+        { key: 'jobApply', label: '投简历', group: 'money', parent: 'jobline', color: 'var(--money)', defaultMinutes: 15, hint: '筛岗、改简历、投递' },
+        { key: 'job', label: '其他推进', group: 'money', parent: 'jobline', color: 'var(--money)', defaultMinutes: 15, hint: '面试准备、联系猎头或内推' },
         { key: 'stock', label: '股票投资', group: 'money', color: 'var(--money)', defaultMinutes: 75, hint: '研究、复盘和投资决策记录' },
         { key: 'childRead', label: '陪着读书', group: 'education', color: 'var(--education)', defaultMinutes: 30, hint: '稳定陪伴与共同阅读' },
         { key: 'social', label: '陪着社交', group: 'education', color: 'var(--education)', defaultMinutes: 120, hint: '社交活动或高质量陪伴' },
@@ -515,8 +530,36 @@
         { key: 'workout', label: 'Workout', group: 'body', color: 'var(--body)', defaultMinutes: 20, hint: '工作日 20 分钟，休息日 60 分钟' },
         { key: 'reading', label: 'Read', group: 'mind', color: 'var(--mind)', defaultMinutes: 60, hint: '休息日的恢复性阅读' }
       ];
+      var PARENTS = [
+        { key: 'jobline', label: '找新工作', group: 'money', color: 'var(--money)', hint: '英语 + 投简历 + 其他推进' }
+      ];
+      var JOB_KEYS = ['jobEnglish', 'jobApply', 'job'];
+      var QUICK_KEYS = ['jobEnglish', 'jobApply', 'stock', 'workout', 'childRead', 'reading'];
+      var LINES = [
+        { label: '挣钱', group: 'money', color: 'var(--money)' },
+        { label: '教育', group: 'education', color: 'var(--education)' },
+        { label: '身体', group: 'body', color: 'var(--body)' },
+        { label: '心理', group: 'mind', color: 'var(--mind)' }
+      ];
+
       var taskByKey = {};
       TASKS.forEach(function (task) { taskByKey[task.key] = task; });
+      var parentByKey = {};
+      PARENTS.forEach(function (parent) {
+        parent.children = TASKS.filter(function (task) { return task.parent === parent.key; })
+          .map(function (task) { return task.key; });
+        parentByKey[parent.key] = parent;
+      });
+      function keysOfGroup(group) {
+        return TASKS.filter(function (task) { return task.group === group; })
+          .map(function (task) { return task.key; });
+      }
+      function sumKeys(data, keys) {
+        return keys.reduce(function (total, key) { return total + (Number(data[key]) || 0); }, 0);
+      }
+      function targetOf(keys) {
+        return keys.reduce(function (total, key) { return total + (Number(state.targets[key]) || 0); }, 0);
+      }
 
       function localDateISO(date) {
         var offset = date.getTimezoneOffset() * 60000;
@@ -561,15 +604,31 @@
       function newState() {
         return {
           weekStart: mondayFor(new Date()),
-          targets: { job: 225, stock: 225, childRead: 150, social: 120, theory: 120, workout: 220, reading: 120 },
+          // 求职线三个子项合计 225，与「求职 : 投资 : 育儿理论 = 2 : 2 : 1」保持一致。
+          targets: { jobEnglish: 75, jobApply: 75, job: 75, stock: 225, childRead: 150, social: 120, theory: 120, workout: 220, reading: 120 },
           records: []
         };
       }
+
+      // 旧档只有 job 一项求职目标（默认 225）。直接 Object.assign 会把它盖到「其他推进」
+      // 身上，导致求职线总目标变成 375、2:2:1 被悄悄破坏。所以按总量守恒拆成三份。
+      // 记录不需要迁移：task 为 'job' 的旧记录仍是合法叶子，只是标签改成了「其他推进」。
+      function migrateTargets(targets) {
+        if (!targets || targets.jobEnglish !== undefined) return targets;
+        var legacy = Number(targets.job);
+        if (!Number.isFinite(legacy) || legacy < 0) return targets;
+        var each = Math.round(legacy / 3 / 5) * 5;
+        targets.jobEnglish = each;
+        targets.jobApply = each;
+        targets.job = Math.max(0, legacy - each * 2);
+        return targets;
+      }
+
       function normaliseState(stored) {
         if (!stored || typeof stored !== 'object') return null;
         var initial = newState();
         initial.weekStart = typeof stored.weekStart === 'string' ? stored.weekStart : initial.weekStart;
-        initial.targets = Object.assign(initial.targets, stored.targets || {});
+        initial.targets = Object.assign(initial.targets, migrateTargets(stored.targets) || {});
         initial.records = Array.isArray(stored.records) ? stored.records.filter(function (record) {
           return record && taskByKey[record.task] && typeof record.date === 'string' && Number(record.minutes) > 0;
         }) : [];
@@ -646,15 +705,10 @@
         var bar = document.getElementById('heroBar');
         bar.setAttribute('aria-valuenow', progress);
         bar.firstElementChild.style.width = progress + '%';
-        var lines = [
-          { label: '挣钱', keys: ['job', 'stock'], color: 'var(--money)' },
-          { label: '教育', keys: ['childRead', 'social', 'theory'], color: 'var(--education)' },
-          { label: '身体', keys: ['workout'], color: 'var(--body)' },
-          { label: '心理', keys: ['reading'], color: 'var(--mind)' }
-        ];
-        document.getElementById('mainLineSummary').innerHTML = lines.map(function (line) {
-          var done = line.keys.reduce(function (sum, key) { return sum + data[key]; }, 0);
-          var target = line.keys.reduce(function (sum, key) { return sum + Number(state.targets[key]); }, 0);
+        document.getElementById('mainLineSummary').innerHTML = LINES.map(function (line) {
+          var keys = keysOfGroup(line.group);
+          var done = sumKeys(data, keys);
+          var target = targetOf(keys);
           return '<article class="summary-card" style="border-top:3px solid ' + line.color + '">' +
             '<span>' + line.label + '</span><b>' + percentage(done, target) + '%</b>' +
             '<small>' + formatMinutes(done) + ' / ' + formatMinutes(target) + '</small></article>';
@@ -664,7 +718,7 @@
         var today = new Date();
         var weekend = today.getDay() === 0 || today.getDay() === 6;
         var dateNumber = today.getDate();
-        var moneyTask = dateNumber % 2 ? 'job' : 'stock';
+        var moneyTask = dateNumber % 2 ? 'jobApply' : 'stock';
         var output = [
           { task: 'workout', minutes: weekend ? 60 : 20 },
           { task: 'childRead', minutes: 30 },
@@ -687,17 +741,11 @@
             '<span class="focus-time">' + formatMinutes(item.minutes) + '</span></div>';
         }).join('');
 
-        var quickItems = [
-          { task: 'workout', minutes: currentMinuteDefault('workout') },
-          { task: 'job', minutes: 75 },
-          { task: 'stock', minutes: 75 },
-          { task: 'childRead', minutes: 30 },
-          { task: 'reading', minutes: 60 }
-        ];
-        document.getElementById('quickGrid').innerHTML = quickItems.map(function (item) {
-          var task = taskByKey[item.task];
-          return '<button class="quick-add ' + task.group + '" type="button" data-quick="' + task.key + '" data-minutes="' + item.minutes + '">' +
-            '<span class="quick-name">' + task.label + '</span><span class="quick-time">记录 ' + formatMinutes(item.minutes) + '</span></button>';
+        // 快速记一笔统一固定 15 分钟：同一件事做久了就多点几下，不再按项目给不同默认值。
+        document.getElementById('quickGrid').innerHTML = QUICK_KEYS.map(function (key) {
+          var task = taskByKey[key];
+          return '<button class="quick-add ' + task.group + '" type="button" data-quick="' + task.key + '" data-minutes="' + QUICK_MINUTES + '">' +
+            '<span class="quick-name">' + task.label + '</span><span class="quick-time">记录 ' + formatMinutes(QUICK_MINUTES) + '</span></button>';
         }).join('');
 
         var recent = sortRecent(state.records).slice(0, 5);
@@ -705,16 +753,39 @@
           recent.map(function (record) { return recordMarkup(record, true); }).join('') :
           '<p class="empty">还没有任何记录。先点一次快速记一笔。</p>';
       }
+      // 把 TASKS 展开成带层级的展示行：汇总行（父）之后紧跟它的子项。
+      function trackEntries(data) {
+        var rows = [];
+        var emitted = {};
+        TASKS.forEach(function (task) {
+          var parent = task.parent ? parentByKey[task.parent] : null;
+          if (parent && !emitted[parent.key]) {
+            emitted[parent.key] = true;
+            rows.push({
+              label: parent.label, hint: parent.hint, color: parent.color,
+              done: sumKeys(data, parent.children), target: targetOf(parent.children), child: false
+            });
+          }
+          rows.push({
+            label: task.label, hint: task.hint, color: task.color,
+            done: Number(data[task.key]) || 0, target: Number(state.targets[task.key]) || 0, child: !!parent
+          });
+        });
+        return rows;
+      }
+
       function renderWeek(data, records) {
-        var difference = data.job - data.stock;
+        // 求职侧是三个子项之和，不是单看「其他推进」。
+        var jobTotal = sumKeys(data, JOB_KEYS);
+        var difference = jobTotal - data.stock;
         var title = document.getElementById('balanceTitle');
         var text = document.getElementById('balanceText');
-        if (data.job === 0 && data.stock === 0) {
+        if (jobTotal === 0 && data.stock === 0) {
           title.textContent = '本周双引擎还未启动';
           text.textContent = '找工作和股票投资各安排三个专注块，先从其中一个开始。';
         } else if (Math.abs(difference) <= 20) {
           title.textContent = '找工作与投资投入均衡';
-          text.textContent = '找工作 ' + formatMinutes(data.job) + ' · 股票投资 ' + formatMinutes(data.stock) + '。';
+          text.textContent = '找工作 ' + formatMinutes(jobTotal) + ' · 股票投资 ' + formatMinutes(data.stock) + '。';
         } else if (difference > 0) {
           title.textContent = '投资线需要补 ' + formatMinutes(difference);
           text.textContent = '求职目前领先；下一段挣钱专注时间留给投资研究或复盘。';
@@ -722,14 +793,13 @@
           title.textContent = '求职线需要补 ' + formatMinutes(Math.abs(difference));
           text.textContent = '投资目前领先；下一段挣钱专注时间留给求职推进。';
         }
-        document.getElementById('trackList').innerHTML = TASKS.map(function (task) {
-          var done = data[task.key];
-          var target = Number(state.targets[task.key]);
-          var progress = percentage(done, target);
-          return '<div class="track-row"><span class="record-marker" style="background:' + task.color + '"></span>' +
-            '<div><h3>' + task.label + '</h3><div class="track-sub">' + task.hint + '</div></div>' +
-            '<div class="track-value"><b>' + formatMinutes(done) + '</b> / ' + formatMinutes(target) + '</div>' +
-            '<div class="bar"><span style="width:' + progress + '%;background:' + task.color + '"></span></div></div>';
+        document.getElementById('trackList').innerHTML = trackEntries(data).map(function (row) {
+          var progress = percentage(row.done, row.target);
+          return '<div class="track-row' + (row.child ? ' is-child' : '') + '">' +
+            '<span class="record-marker" style="background:' + row.color + '"></span>' +
+            '<div><h3>' + row.label + '</h3><div class="track-sub">' + row.hint + '</div></div>' +
+            '<div class="track-value"><b>' + formatMinutes(row.done) + '</b> / ' + formatMinutes(row.target) + '</div>' +
+            '<div class="bar"><span style="width:' + progress + '%;background:' + row.color + '"></span></div></div>';
         }).join('');
 
         var todayISO = localDateISO(new Date());
@@ -744,18 +814,32 @@
           '<p class="empty">本周尚未记录事项。</p>';
       }
       function renderSettings() {
-        document.getElementById('targetList').innerHTML = TASKS.map(function (task) {
-          return '<div class="target-row"><label for="target-' + task.key + '">' + task.label + '<span>' + task.hint + '</span></label>' +
-            '<input id="target-' + task.key + '" type="number" min="0" max="2000" step="5" value="' + Number(state.targets[task.key]) + '" data-target="' + task.key + '" aria-label="' + task.label + '每周目标分钟"></div>';
-        }).join('');
+        var html = '';
+        var emitted = {};
+        TASKS.forEach(function (task) {
+          var parent = task.parent ? parentByKey[task.parent] : null;
+          if (parent && !emitted[parent.key]) {
+            emitted[parent.key] = true;
+            // 汇总行只读：它的目标就是子项之和，单独编辑会和子项打架。
+            html += '<div class="target-row is-total"><label>' + parent.label +
+              '<span>' + parent.hint + '</span></label>' +
+              '<b>' + targetOf(parent.children) + '</b></div>';
+          }
+          html += '<div class="target-row' + (parent ? ' is-child' : '') + '">' +
+            '<label for="target-' + task.key + '">' + task.label + '<span>' + task.hint + '</span></label>' +
+            '<input id="target-' + task.key + '" type="number" min="0" max="2000" step="5" value="' +
+            Number(state.targets[task.key]) + '" data-target="' + task.key +
+            '" aria-label="' + task.label + '每周目标分钟"></div>';
+        });
+        document.getElementById('targetList').innerHTML = html;
       }
       function populateForm() {
         document.getElementById('recordTask').innerHTML = TASKS.map(function (task) {
           return '<option value="' + task.key + '">' + task.label + '</option>';
         }).join('');
-        document.getElementById('recordTask').value = 'job';
+        document.getElementById('recordTask').value = TASKS[0].key;
         document.getElementById('recordDate').value = localDateISO(new Date());
-        document.getElementById('recordMinutes').value = currentMinuteDefault('job');
+        document.getElementById('recordMinutes').value = currentMinuteDefault(TASKS[0].key);
       }
       function addRecord(taskKey, minutes, note, dateISO) {
         var today = localDateISO(new Date());
@@ -863,10 +947,11 @@
           return;
         }
         if (event.target.id === 'syncIncome') {
-          state.targets.stock = Number(state.targets.job) || 0;
+          // 对齐的是求职线总目标（三个子项之和），不是单独的「其他推进」。
+          state.targets.stock = targetOf(JOB_KEYS);
           saveState();
           render();
-          showToast('投资目标已同步为求职目标。');
+          showToast('投资目标已同步为求职线总目标 ' + formatMinutes(state.targets.stock) + '。');
           return;
         }
         if (event.target.id === 'importData') {
