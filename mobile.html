@@ -259,19 +259,56 @@
     .track-value b { color: var(--ink); }
     .bar { grid-column: 2 / 4; height: 7px; overflow: hidden; margin-top: 7px; border-radius: 999px; background: #edf0ed; }
     .bar span { display: block; height: 100%; border-radius: inherit; }
-    .day-summary { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 12px; }
-    .day-summary div {
+    .day-summary { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .day-summary button {
+      display: block;
+      width: 100%;
       min-height: 49px;
+      border: 2px solid transparent;
       border-radius: 9px;
       padding: 6px 2px;
       color: var(--muted);
       background: #f6f8f6;
       text-align: center;
+      font: inherit;
       font-size: 10px;
     }
     .day-summary b { display: block; color: var(--ink); font-size: 11px; }
     .day-summary .today { color: #fff; background: var(--money); }
     .day-summary .today b { color: #fff; }
+    .day-summary .is-selected { border-color: #17493a; box-shadow: 0 0 0 3px rgba(47, 128, 102, .2); }
+    .day-summary .is-empty b { color: #aab4ad; }
+    .hint-tap { margin: 9px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
+    /* 当天分项小计：按项目聚合，回答「那天做了哪些任务、各多少时长」 */
+    .rollup { display: grid; gap: 7px; }
+    .rollup-row { display: flex; align-items: center; gap: 9px; }
+    .rollup-row .rollup-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 650; }
+    .rollup-row .rollup-count { color: var(--muted); font-size: 11px; font-weight: 400; }
+    .rollup-row .rollup-minutes { font-size: 13px; font-weight: 750; white-space: nowrap; }
+    .rollup-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px dashed var(--line);
+      font-size: 13px;
+    }
+    .rollup-total b { font-size: 15px; }
+    .clearday {
+      display: block;
+      width: 100%;
+      min-height: 44px;
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      color: var(--ink);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .clearday[hidden] { display: none; }
     .target-list { display: grid; gap: 10px; }
     .target-row {
       display: grid;
@@ -458,14 +495,33 @@
       <section class="section">
         <div class="section-heading">
           <h2>每天投入</h2>
-          <p>点击周次按钮可回看</p>
+          <p>点一天看明细</p>
         </div>
         <div class="card">
           <div class="day-summary" id="daySummary"></div>
+          <p class="hint-tap" id="dayHint"></p>
         </div>
       </section>
 
-      <section class="section">
+      <section class="section" id="dayDetailSection" hidden>
+        <div class="section-heading">
+          <h2 id="dayTitle"></h2>
+          <p id="daySubtitle"></p>
+        </div>
+        <div class="card" id="dayRollup"></div>
+      </section>
+
+      <section class="section" id="dayLogSection" hidden>
+        <div class="section-heading">
+          <h2>当天流水</h2>
+          <p>可删除 / 看备注</p>
+        </div>
+        <div class="card week-log" id="dayLog"></div>
+      </section>
+
+      <button class="clearday" type="button" id="clearDay" hidden>看全周记录 →</button>
+
+      <section class="section" id="weekLogSection">
         <div class="section-heading">
           <h2>本周全部记录</h2>
           <p id="weekRecordCount"></p>
@@ -644,6 +700,21 @@
       var state = loadState();
       var toastTimer;
       var undoId = null;
+      // 「本周」页当前选中的那一天。刻意不放进 state：state 会被整体序列化进 localStorage
+      // 和导出的备份，一个纯 UI 状态不该污染备份格式。
+      var selectedDate = null;
+
+      function inCurrentWeek(iso) {
+        return !!iso && iso >= state.weekStart && iso <= plusDays(state.weekStart, 6);
+      }
+      // 选中日可能因为翻周 / 导入备份而落到当前周之外，统一在这里兜住。
+      function selectedDay() {
+        return inCurrentWeek(selectedDate) ? selectedDate : null;
+      }
+      function formatDayLong(iso) {
+        var date = new Date(iso + 'T12:00:00');
+        return (date.getMonth() + 1) + '月' + date.getDate() + '日';
+      }
       function saveState() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
@@ -774,6 +845,31 @@
         return rows;
       }
 
+      // 当天分项小计：按项目聚合，三次 15 分钟的英语合并成一行「英语 45 分钟 · 3 笔」。
+      // 这是「那天做了哪些任务、各多少时长」的答案；逐笔流水另外渲染。
+      function dayRollupMarkup(dayRecords, total) {
+        if (!dayRecords.length) return '<p class="empty">这天还没有记录。</p>';
+        var byTask = {};
+        dayRecords.forEach(function (record) {
+          if (!byTask[record.task]) byTask[record.task] = { minutes: 0, count: 0 };
+          byTask[record.task].minutes += Number(record.minutes);
+          byTask[record.task].count += 1;
+        });
+        var keys = Object.keys(byTask).sort(function (a, b) {
+          return byTask[b].minutes - byTask[a].minutes;
+        });
+        return '<div class="rollup">' + keys.map(function (key) {
+          var task = taskByKey[key];
+          var item = byTask[key];
+          return '<div class="rollup-row">' +
+            '<span class="record-marker" style="background:' + task.color + '"></span>' +
+            '<span class="rollup-name">' + escapeHtml(task.label) +
+            (item.count > 1 ? ' <span class="rollup-count">' + item.count + ' 笔</span>' : '') + '</span>' +
+            '<span class="rollup-minutes">' + formatMinutes(item.minutes) + '</span></div>';
+        }).join('') + '</div>' +
+          '<div class="rollup-total"><span>当天合计</span><b>' + formatMinutes(total) + '</b></div>';
+      }
+
       function renderWeek(data, records) {
         // 求职侧是三个子项之和，不是单看「其他推进」。
         var jobTotal = sumKeys(data, JOB_KEYS);
@@ -804,14 +900,52 @@
 
         var todayISO = localDateISO(new Date());
         var names = ['一', '二', '三', '四', '五', '六', '日'];
+        var chosen = selectedDay();
         document.getElementById('daySummary').innerHTML = datesForWeek(state.weekStart).map(function (date, index) {
           var minutes = records.filter(function (record) { return record.date === date; }).reduce(function (sum, record) { return sum + Number(record.minutes); }, 0);
-          return '<div class="' + (date === todayISO ? 'today' : '') + '"><span>周' + names[index] + '</span><b>' + (minutes ? formatMinutes(minutes).replace(' 小时 ', 'h').replace(' 分', 'm').replace(' 分钟', 'm') : '—') + '</b></div>';
+          var classes = [];
+          if (date === todayISO) classes.push('today');
+          if (date === chosen) classes.push('is-selected');
+          if (!minutes) classes.push('is-empty');
+          return '<button type="button" class="' + classes.join(' ') + '" data-day="' + date +
+            '" aria-pressed="' + (date === chosen) + '" aria-label="周' + names[index] + ' ' + formatDayLong(date) + '">' +
+            '<span>周' + names[index] + '</span><b>' +
+            (minutes ? formatMinutes(minutes).replace(' 小时 ', 'h').replace(' 分', 'm').replace(' 分钟', 'm') : '—') +
+            '</b></button>';
         }).join('');
-        document.getElementById('weekRecordCount').textContent = records.length + ' 条';
-        document.getElementById('weekLog').innerHTML = records.length ?
-          sortRecent(records).map(function (record) { return recordMarkup(record, true); }).join('') :
-          '<p class="empty">本周尚未记录事项。</p>';
+        document.getElementById('dayHint').textContent = chosen ?
+          '已选 ' + formatDayLong(chosen) + '，再点一次取消' :
+          '点任意一天查看当天明细';
+
+        var dayDetailSection = document.getElementById('dayDetailSection');
+        var dayLogSection = document.getElementById('dayLogSection');
+        var weekLogSection = document.getElementById('weekLogSection');
+        var clearDayButton = document.getElementById('clearDay');
+
+        if (chosen) {
+          var dayRecords = records.filter(function (record) { return record.date === chosen; });
+          var dayTotal = dayRecords.reduce(function (sum, record) { return sum + Number(record.minutes); }, 0);
+          var offset = datesForWeek(state.weekStart).indexOf(chosen);
+          document.getElementById('dayTitle').textContent = formatDayLong(chosen) + ' 周' + names[offset];
+          document.getElementById('daySubtitle').textContent = dayRecords.length ?
+            formatMinutes(dayTotal) + ' · ' + dayRecords.length + ' 笔' : '还没有记录';
+          document.getElementById('dayRollup').innerHTML = dayRollupMarkup(dayRecords, dayTotal);
+          document.getElementById('dayLog').innerHTML = dayRecords.length ?
+            sortRecent(dayRecords).map(function (record) { return recordMarkup(record, true); }).join('') : '';
+          dayDetailSection.hidden = false;
+          dayLogSection.hidden = !dayRecords.length;
+          clearDayButton.hidden = false;
+          weekLogSection.hidden = true;
+        } else {
+          dayDetailSection.hidden = true;
+          dayLogSection.hidden = true;
+          clearDayButton.hidden = true;
+          weekLogSection.hidden = false;
+          document.getElementById('weekRecordCount').textContent = records.length + ' 条';
+          document.getElementById('weekLog').innerHTML = records.length ?
+            sortRecent(records).map(function (record) { return recordMarkup(record, true); }).join('') :
+            '<p class="empty">本周尚未记录事项。</p>';
+        }
       }
       function renderSettings() {
         var html = '';
@@ -854,6 +988,7 @@
         };
         state.records.push(record);
         state.weekStart = mondayFor(record.date);
+        selectedDate = date;   // 记完就把「本周」页的选中日落到这一天
         saveState();
         render();
         showToast('已记录 ' + taskByKey[taskKey].label + ' · ' + formatMinutes(record.minutes) +
@@ -912,10 +1047,30 @@
         var weekButton = event.target.closest('[data-week]');
         if (weekButton) {
           var direction = weekButton.getAttribute('data-week');
+          // 翻周时把选中状态落到新那周的同一个星期几；没选中则保持不选中。
+          var keepOffset = selectedDay() ? datesForWeek(state.weekStart).indexOf(selectedDate) : -1;
           if (direction === 'prev') state.weekStart = plusDays(state.weekStart, -7);
           if (direction === 'next') state.weekStart = plusDays(state.weekStart, 7);
           if (direction === 'today') state.weekStart = mondayFor(new Date());
+          if (direction === 'today') {
+            var backToToday = localDateISO(new Date());
+            selectedDate = inCurrentWeek(backToToday) ? backToToday : null;
+          } else if (keepOffset >= 0) {
+            selectedDate = plusDays(state.weekStart, keepOffset);
+          }
           saveState();
+          render();
+          return;
+        }
+        var dayButton = event.target.closest('[data-day]');
+        if (dayButton) {
+          var day = dayButton.getAttribute('data-day');
+          selectedDate = (selectedDate === day) ? null : day;   // 再点一次取消
+          render();                                             // 纯 UI 状态，不必 saveState
+          return;
+        }
+        if (event.target.id === 'clearDay') {
+          selectedDate = null;
           render();
           return;
         }
@@ -1024,6 +1179,10 @@
           });
         });
       }
+
+      // 进页面默认选中今天；今天不在当前周（翻过周次、或久未打开）时维持全周视图。
+      var todayOnLoad = localDateISO(new Date());
+      selectedDate = inCurrentWeek(todayOnLoad) ? todayOnLoad : null;
 
       populateForm();
       render();
