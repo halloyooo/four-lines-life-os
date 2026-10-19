@@ -94,40 +94,6 @@
     .screen { display: none; animation: appear .18s ease-out; }
     .screen.active { display: block; }
     @keyframes appear { from { opacity: .2; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    .hero {
-      overflow: hidden;
-      margin-bottom: 14px;
-      border-radius: 20px;
-      padding: 18px;
-      color: #174737;
-      background: linear-gradient(145deg, #dbeee4, #f7fbf8);
-      box-shadow: var(--shadow);
-    }
-    .hero-label { margin-bottom: 4px; font-size: 12px; font-weight: 750; }
-    .hero-title { margin: 0; font-size: 24px; letter-spacing: -.04em; }
-    .hero-detail { margin: 4px 0 13px; color: #477061; font-size: 13px; }
-    .hero-progress {
-      height: 8px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(47, 128, 102, .14);
-    }
-    .hero-progress span { display: block; height: 100%; border-radius: inherit; background: var(--money); transition: width .2s ease; }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-    .summary-card {
-      border-radius: 14px;
-      padding: 11px;
-      background: var(--card);
-      box-shadow: var(--shadow);
-    }
-    .summary-card span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
-    .summary-card b { display: block; margin-top: 4px; color: var(--ink); font-size: 19px; letter-spacing: -.03em; }
-    .summary-card small { display: block; margin-top: 1px; color: var(--muted); font-size: 11px; }
     .section {
       margin-top: 18px;
     }
@@ -146,21 +112,6 @@
       background: var(--card);
       box-shadow: var(--shadow);
     }
-    .focus-list { display: grid; gap: 9px; }
-    .focus-item {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      min-height: 50px;
-      border-radius: 12px;
-      padding: 9px 10px;
-      background: #f8faf8;
-    }
-    .focus-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; }
-    .focus-copy { min-width: 0; flex: 1; }
-    .focus-copy b { display: block; font-size: 14px; }
-    .focus-copy span { display: block; margin-top: 1px; color: var(--muted); font-size: 12px; }
-    .focus-time { color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
     .quick-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -182,18 +133,8 @@
     .quick-add.education { border-color: #d9d1f0; background: var(--education-soft); }
     .quick-add.body { border-color: #f0d0c4; background: var(--body-soft); }
     .quick-add.mind { border-color: #cce0e9; background: var(--mind-soft); }
-    details.card { padding: 0; overflow: hidden; }
-    details summary {
-      min-height: 50px;
-      padding: 15px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .form-inner { padding: 0 14px 14px; }
-    .field { display: grid; gap: 6px; margin-top: 10px; }
     label { color: var(--muted); font-size: 12px; font-weight: 700; }
-    input, select, textarea {
+    input {
       width: 100%;
       border: 1px solid #cbd7ce;
       border-radius: 10px;
@@ -202,18 +143,6 @@
       background: #fff;
       font-size: 16px;
     }
-    textarea { min-height: 72px; resize: vertical; }
-    .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .primary {
-      min-height: 46px;
-      border: 0;
-      border-radius: 12px;
-      padding: 10px 14px;
-      color: #fff;
-      background: var(--money);
-      font-weight: 750;
-    }
-    .primary:active { transform: translateY(1px); background: #226a53; }
     .secondary {
       min-height: 42px;
       border: 1px solid var(--line);
@@ -225,7 +154,6 @@
       font-weight: 700;
     }
     .secondary.danger { color: var(--danger); }
-    .save-row { margin-top: 12px; }
     .recent-list, .week-log { display: grid; gap: 8px; }
     .recent-item, .log-item {
       display: flex;
@@ -418,55 +346,12 @@
     </header>
 
     <section class="screen active" id="todayScreen" aria-labelledby="todayTab">
-      <section class="hero" aria-label="本周总体完成度">
-        <div class="hero-label">本周已投入</div>
-        <p class="hero-title" id="heroTitle">0 分钟</p>
-        <p class="hero-detail" id="heroDetail">先完成一个小行动，让系统开始运转。</p>
-        <div class="hero-progress" role="progressbar" id="heroBar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
-      </section>
-      <section class="summary-grid" id="mainLineSummary" aria-label="四条主线本周完成度"></section>
-
-      <section class="section">
-        <div class="section-heading">
-          <h2>今天的锚点</h2>
-          <p id="todayCaption"></p>
-        </div>
-        <div class="card focus-list" id="todayFocus"></div>
-      </section>
-
       <section class="section">
         <div class="section-heading">
           <h2>快速记一笔</h2>
           <p>点一下即保存</p>
         </div>
         <div class="quick-grid" id="quickGrid"></div>
-      </section>
-
-      <section class="section">
-        <details class="card">
-          <summary>补记其他日期 / 其他事项 / 加一句备注</summary>
-          <form class="form-inner" id="customForm">
-            <div class="field">
-              <label for="recordDate">日期（可补记前几天）</label>
-              <input id="recordDate" name="date" type="date" required>
-            </div>
-            <div class="two-cols">
-              <div class="field">
-                <label for="recordTask">项目</label>
-                <select id="recordTask" name="task"></select>
-              </div>
-              <div class="field">
-                <label for="recordMinutes">分钟</label>
-                <input id="recordMinutes" name="minutes" type="number" min="1" max="720" step="5" required>
-              </div>
-            </div>
-            <div class="field">
-              <label for="recordNote">一句记录（可选）</label>
-              <textarea id="recordNote" name="note" maxlength="180" placeholder="例如：完成目标岗位简历第一版"></textarea>
-            </div>
-            <div class="save-row"><button class="primary" type="submit">保存这一笔</button></div>
-          </form>
-        </details>
       </section>
 
       <section class="section">
@@ -591,12 +476,6 @@
       ];
       var JOB_KEYS = ['jobEnglish', 'jobApply', 'job'];
       var QUICK_KEYS = ['jobEnglish', 'jobApply', 'stock', 'workout', 'childRead', 'reading'];
-      var LINES = [
-        { label: '挣钱', group: 'money', color: 'var(--money)' },
-        { label: '教育', group: 'education', color: 'var(--education)' },
-        { label: '身体', group: 'body', color: 'var(--body)' },
-        { label: '心理', group: 'mind', color: 'var(--mind)' }
-      ];
 
       var taskByKey = {};
       TASKS.forEach(function (task) { taskByKey[task.key] = task; });
@@ -606,10 +485,6 @@
           .map(function (task) { return task.key; });
         parentByKey[parent.key] = parent;
       });
-      function keysOfGroup(group) {
-        return TASKS.filter(function (task) { return task.group === group; })
-          .map(function (task) { return task.key; });
-      }
       function sumKeys(data, keys) {
         return keys.reduce(function (total, key) { return total + (Number(data[key]) || 0); }, 0);
       }
@@ -731,11 +606,6 @@
       function percentage(done, target) {
         return target > 0 ? Math.min(100, Math.round(done / target * 100)) : 0;
       }
-      function currentMinuteDefault(taskKey, dateISO) {
-        if (taskKey !== 'workout') return taskByKey[taskKey].defaultMinutes;
-        var day = (dateISO ? new Date(dateISO + 'T12:00:00') : new Date()).getDay();
-        return day === 0 || day === 6 ? 60 : 20;
-      }
       function showToast(message, id) {
         var toast = document.getElementById('toast');
         var undoButton = document.getElementById('undoButton');
@@ -767,51 +637,7 @@
       function renderHeader() {
         document.getElementById('rangeLabel').textContent = formatRange(state.weekStart);
       }
-      function renderHero(data) {
-        var totalDone = TASKS.reduce(function (sum, task) { return sum + data[task.key]; }, 0);
-        var totalTarget = TASKS.reduce(function (sum, task) { return sum + Number(state.targets[task.key]); }, 0);
-        var progress = percentage(totalDone, totalTarget);
-        document.getElementById('heroTitle').textContent = formatMinutes(totalDone);
-        document.getElementById('heroDetail').textContent = progress ? '已完成本周计划的 ' + progress + '% · 继续守住一个个小锚点。' : '从一个小行动开始，系统就会开始运转。';
-        var bar = document.getElementById('heroBar');
-        bar.setAttribute('aria-valuenow', progress);
-        bar.firstElementChild.style.width = progress + '%';
-        document.getElementById('mainLineSummary').innerHTML = LINES.map(function (line) {
-          var keys = keysOfGroup(line.group);
-          var done = sumKeys(data, keys);
-          var target = targetOf(keys);
-          return '<article class="summary-card" style="border-top:3px solid ' + line.color + '">' +
-            '<span>' + line.label + '</span><b>' + percentage(done, target) + '%</b>' +
-            '<small>' + formatMinutes(done) + ' / ' + formatMinutes(target) + '</small></article>';
-        }).join('');
-      }
-      function todaySuggestions() {
-        var today = new Date();
-        var weekend = today.getDay() === 0 || today.getDay() === 6;
-        var dateNumber = today.getDate();
-        var moneyTask = dateNumber % 2 ? 'jobApply' : 'stock';
-        var output = [
-          { task: 'workout', minutes: weekend ? 60 : 20 },
-          { task: 'childRead', minutes: 30 },
-          { task: moneyTask, minutes: 75 }
-        ];
-        if (weekend) {
-          output.push({ task: 'reading', minutes: 60 });
-          output.push({ task: 'social', minutes: 120 });
-        }
-        return output;
-      }
       function renderToday() {
-        var suggestions = todaySuggestions();
-        var weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-        document.getElementById('todayCaption').textContent = weekdayNames[new Date().getDay()];
-        document.getElementById('todayFocus').innerHTML = suggestions.map(function (item) {
-          var task = taskByKey[item.task];
-          return '<div class="focus-item"><span class="focus-dot" style="background:' + task.color + '"></span>' +
-            '<div class="focus-copy"><b>' + task.label + '</b><span>' + task.hint + '</span></div>' +
-            '<span class="focus-time">' + formatMinutes(item.minutes) + '</span></div>';
-        }).join('');
-
         // 快速记一笔统一固定 15 分钟：同一件事做久了就多点几下，不再按项目给不同默认值。
         document.getElementById('quickGrid').innerHTML = QUICK_KEYS.map(function (key) {
           var task = taskByKey[key];
@@ -967,14 +793,6 @@
         });
         document.getElementById('targetList').innerHTML = html;
       }
-      function populateForm() {
-        document.getElementById('recordTask').innerHTML = TASKS.map(function (task) {
-          return '<option value="' + task.key + '">' + task.label + '</option>';
-        }).join('');
-        document.getElementById('recordTask').value = TASKS[0].key;
-        document.getElementById('recordDate').value = localDateISO(new Date());
-        document.getElementById('recordMinutes').value = currentMinuteDefault(TASKS[0].key);
-      }
       function addRecord(taskKey, minutes, note, dateISO) {
         var today = localDateISO(new Date());
         var date = dateISO || today;
@@ -1037,7 +855,6 @@
         var records = weekRecords();
         var data = totals(records);
         renderHeader();
-        renderHero(data);
         renderToday();
         renderWeek(data, records);
         renderSettings();
@@ -1139,32 +956,6 @@
           render();
           return;
         }
-        if (target.id === 'recordTask' || target.id === 'recordDate') {
-          document.getElementById('recordMinutes').value = currentMinuteDefault(
-            document.getElementById('recordTask').value,
-            document.getElementById('recordDate').value
-          );
-        }
-      });
-      document.getElementById('customForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-        var task = document.getElementById('recordTask').value;
-        var date = document.getElementById('recordDate').value;
-        var minutes = Number(document.getElementById('recordMinutes').value);
-        var note = document.getElementById('recordNote').value.trim();
-        if (!taskByKey[task] || !Number.isFinite(minutes) || minutes < 1) {
-          showToast('请填写有效的项目和分钟数。');
-          return;
-        }
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-          showToast('请选择一个有效日期。');
-          return;
-        }
-        addRecord(task, minutes, note, date);
-        document.getElementById('recordNote').value = '';
-        // 日期保留在刚选的那天，方便连着补记同一天的几笔。
-        document.getElementById('recordDate').value = date;
-        document.getElementById('recordMinutes').value = currentMinuteDefault(task, date);
       });
       window.addEventListener('storage', function (event) {
         if (event.key === STORAGE_KEY) {
@@ -1184,7 +975,6 @@
       var todayOnLoad = localDateISO(new Date());
       selectedDate = inCurrentWeek(todayOnLoad) ? todayOnLoad : null;
 
-      populateForm();
       render();
     }());
   </script>
